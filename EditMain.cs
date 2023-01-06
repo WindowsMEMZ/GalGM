@@ -57,6 +57,7 @@ namespace GalGM
         private List<uint> gc0005Lines = new List<uint>();
         private List<uint> gc0006Lines = new List<uint>();
         private bool isGC0007Throwed = false;
+        private List<uint> gc0008Lines = new List<uint>();
         private bool isRES001Throwed = false;
         private bool isSP0001Throwed = false;
         private bool isSP0002Throwed = false;
@@ -721,6 +722,177 @@ namespace GalGM
                                 }
                             }
                         }
+
+                        if (lineText[i][0] == '%')
+                        {
+                            string[] codes = lineText[i].Split('|');
+                            if (codes.Length == 2 || codes.Length > 3)
+                            {
+                                DeleteAnError(i + 1);
+                                if (codes.Length == 2)
+                                {
+                                    ThrowAnError("GC0008", "未提供与“显示立绘(资源名|位置|大小)”的所需参数“大小”对应的参数", "对话", i + 1);
+                                }
+                                else
+                                {
+                                    ThrowAnError("GC0009", $"“显示立绘”方法没有采用{codes.Length}个参数的重载", "对话", i + 1);
+                                }
+                            }
+                            else if (codes.Length == 3)
+                            {
+                                DeleteAnError(i + 1);
+                                if (imageNames.IndexOf(codes[0].TrimStart('%')) == -1) //找不到图片资源时
+                                {
+                                    if (soundNames.IndexOf(codes[0].TrimStart('%')) != -1) //找到音频资源时
+                                    {
+                                        //DeleteAnError((uint)i + 1, gc0003Lines);
+                                        ThrowAnError("GC0006", "音频类型不能应用于图片处", "对话", i + 1);
+                                        gc0006Lines.Add((uint)i + 1);
+                                    }
+                                    else
+                                    {
+                                        //DeleteAnError((uint)i + 1, gc0003Lines);
+                                        ThrowAnError("GC0003", $"资源中未包含\"{codes[0].TrimStart('%')}\"的定义", "对话", i + 1);
+                                        gc0003Lines.Add((uint)i + 1);
+                                    }
+                                }
+
+                                if (codes[1] != "Center")
+                                {
+                                    if (codes[1] == "center")
+                                    {
+                                        DeleteAnError(i + 1);
+                                        ThrowAnError("GC0010", $"类型“位置”中不包含“{codes[1]}”选项或此类格式，是否指“Center”?", "对话", i + 1);
+                                    }
+                                    else
+                                    {
+                                        string[] xyStr = codes[1].Split(',');
+                                        if (xyStr.Length != 2)
+                                        {
+                                            DeleteAnError(i + 1);
+                                            ThrowAnError("GC0010", $"类型“位置”中不包含“{codes[1]}”选项或此类格式", "对话", i + 1);
+                                        }
+                                        else
+                                        {
+                                            int outInt;
+                                            bool status1 = int.TryParse(xyStr[0], out outInt);
+                                            bool status2 = int.TryParse(xyStr[1], out outInt);
+                                            if (status1 == false)
+                                            {
+                                                double outDouble;
+                                                if (!double.TryParse(xyStr[0], out outDouble))
+                                                {
+                                                    DeleteAnError(i + 1);
+                                                    ThrowAnError("GC0011", $"参数 1: 无法从文本转换为整数", "对话", i + 1);
+                                                }
+                                                else
+                                                {
+                                                    DeleteAnError(i + 1);
+                                                    ThrowAnError("GC0011", $"参数 1: 无法从小数转换为整数", "对话", i + 1);
+                                                }
+                                            }
+                                            if (status2 == false)
+                                            {
+                                                double outDouble;
+                                                if (!double.TryParse(xyStr[0], out outDouble))
+                                                {
+                                                    DeleteAnError(i + 1);
+                                                    ThrowAnError("GC0011", $"参数 2: 无法从文本转换为整数", "对话", i + 1);
+                                                }
+                                                else
+                                                {
+                                                    DeleteAnError(i + 1);
+                                                    ThrowAnError("GC0011", $"参数 2: 无法从小数转换为整数", "对话", i + 1);
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                                else
+                                {
+                                    if (codes[2] != "ZoomWindow" || codes[2] != "ZoomWindow")
+                                    {
+                                        if (codes[2] == "zoomwindow" || codes[2] == "Zoomwindow" || codes[2] == "zoomWindow" || codes[2] == "ZoomWindows" || codes[2] == "zoomwindows")
+                                        {
+                                            DeleteAnError(i + 1);
+                                            ThrowAnError("GC0010", $"类型“大小”中不包含“{codes[2]}”选项或此类格式，是否指“ZoomWindow”?", "对话", i + 1);
+                                        }
+                                        else if (codes[2] == "raw")
+                                        {
+                                            DeleteAnError(i + 1);
+                                            ThrowAnError("GC0010", $"类型“大小”中不包含“{codes[2]}”选项或此类格式，是否指“Raw”?", "对话", i + 1);
+                                        }
+                                        else
+                                        {
+                                            string[] xyStr = codes[2].Split(',');
+                                            if (xyStr.Length != 2)
+                                            {
+                                                DeleteAnError(i + 1);
+                                                ThrowAnError("GC0010", $"类型“大小”中不包含“{codes[2]}”选项或此类格式", "对话", i + 1);
+                                            }
+                                            else
+                                            {
+                                                int outInt;
+                                                bool status1 = int.TryParse(xyStr[0], out outInt);
+                                                bool status2 = int.TryParse(xyStr[1], out outInt);
+                                                if (status1 == false)
+                                                {
+                                                    double outDouble;
+                                                    if (!double.TryParse(xyStr[0], out outDouble))
+                                                    {
+                                                        DeleteAnError(i + 1);
+                                                        ThrowAnError("GC0011", $"参数 1: 无法从文本转换为整数", "对话", i + 1);
+                                                    }
+                                                    else
+                                                    {
+                                                        DeleteAnError(i + 1);
+                                                        ThrowAnError("GC0011", $"参数 1: 无法从小数转换为整数", "对话", i + 1);
+                                                    }
+                                                }
+                                                if (status2 == false)
+                                                {
+                                                    double outDouble;
+                                                    if (!double.TryParse(xyStr[0], out outDouble))
+                                                    {
+                                                        DeleteAnError(i + 1);
+                                                        ThrowAnError("GC0011", $"参数 2: 无法从文本转换为整数", "对话", i + 1);
+                                                    }
+                                                    else
+                                                    {
+                                                        DeleteAnError(i + 1);
+                                                        ThrowAnError("GC0011", $"参数 2: 无法从小数转换为整数", "对话", i + 1);
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                    else
+                                    {
+                                        DeleteAnError(i + 1);
+                                    }
+                                }
+                                
+                            }
+                            else
+                            {
+                                DeleteAnError(i + 1);
+                                if (imageNames.IndexOf(codes[0].TrimStart('%')) == -1) //找不到图片资源时
+                                {
+                                    if (soundNames.IndexOf(codes[0].TrimStart('%')) != -1) //找到音频资源时
+                                    {
+                                        DeleteAnError((uint)i + 1, gc0003Lines);
+                                        ThrowAnError("GC0006", "音频类型不能应用于图片处", "对话", i + 1);
+                                        gc0006Lines.Add((uint)i + 1);
+                                    }
+                                    else
+                                    {
+                                        DeleteAnError((uint)i + 1, gc0003Lines);
+                                        ThrowAnError("GC0003", $"资源中未包含\"{codes[0].TrimStart('%')}\"的定义", "对话", i + 1);
+                                        gc0003Lines.Add((uint)i + 1);
+                                    }
+                                }
+                            }
+                        }
                     }
                     else //行为空时
                     {
@@ -990,7 +1162,7 @@ namespace GalGM
                         if (i2 != 0)
                         {
                             characternameCache += Base64Convert(characternameAndDialogs[0], true) + "|"; //重复写入人物名
-                            if (characternameAndDialogs[i2][0] != '&' && characternameAndDialogs[i2][0] != '^' && characternameAndDialogs[i2][0] != '~')
+                            if (characternameAndDialogs[i2][0] != '&' && characternameAndDialogs[i2][0] != '^' && characternameAndDialogs[i2][0] != '~' && characternameAndDialogs[i2][0] != '%')
                             {
                                 string[] vo = characternameAndDialogs[i2].Split('|');
                                 if (vo.Length == 2)
@@ -1016,11 +1188,15 @@ namespace GalGM
                 string bgPicPartPathCache = "";
                 bool isUsingBGM = false;
                 int m = 0;
+                string showMorePicIndexCache = "";
+                string showMorePicPathCache = "";
+                string showMorePicLoactionCache = "default|";
+                string showMorePicSizeCache = "default|";
                 for (int i = 0; i < lineText.Length; i++)
                 {
                     if (!string.IsNullOrEmpty(lineText[i]))
                     {
-                        if (lineText[i][0] == '#' || lineText[i][0] == '&' || lineText[i][0] == '^' || lineText[i][0] == '~')
+                        if (lineText[i][0] == '#' || lineText[i][0] == '&' || lineText[i][0] == '^' || lineText[i][0] == '~' || lineText[i][0] == '%')
                         {
                             m++;
                         }
@@ -1046,6 +1222,36 @@ namespace GalGM
                                 Directory.CreateDirectory($"{workSpace}bin\\{exeConfig}\\assets");
                                 File.Copy(imagePaths[index], $"{workSpace}bin\\{exeConfig}\\assets\\{imageNames[index]}.png", true);
                                 bgPicPartPathCache += $"./assets/{imageNames[index]}.png|";
+                            }
+                        }
+
+                        if (lineText[i][0] == '%') //首字母为%时
+                        {
+                            string[] codes = lineText[i].Split('|');
+                            if (codes.Length == 1)
+                            {
+                                showMorePicIndexCache += (i - m + 1).ToString() + "|";
+                                int index = imageNames.IndexOf(codes[0].TrimStart('%'));
+                                if (index != -1)
+                                {
+                                    File.Copy(imagePaths[index], $"{workSpace}bin\\{exeConfig}\\assets\\{imageNames[index]}.png", true);
+                                    showMorePicPathCache += $"./assets/{imageNames[index]}.png|";
+                                }
+                            }
+                            else
+                            {
+                                if (codes.Length == 3)
+                                {
+                                    showMorePicIndexCache += (i - m + 1).ToString() + "|";
+                                    int index = imageNames.IndexOf(codes[0].TrimStart('%'));
+                                    if (index != -1)
+                                    {
+                                        File.Copy(imagePaths[index], $"{workSpace}bin\\{exeConfig}\\assets\\{imageNames[index]}.png", true);
+                                        showMorePicPathCache += $"./assets/{imageNames[index]}.png|";
+                                    }
+                                    showMorePicLoactionCache += $"{codes[1]}|";
+                                    showMorePicSizeCache += $"{codes[2]}|";
+                                }
                             }
                         }
                     }
@@ -1133,7 +1339,12 @@ namespace GalGM
                 bgMusicPartPathCache = bgMusicPartPathCache.TrimEnd('|');
                 bgPicPartCache = bgPicPartCache.TrimEnd('|');
                 bgPicPartPathCache = bgPicPartPathCache.TrimEnd('|');
+                showMorePicIndexCache = showMorePicIndexCache.TrimEnd('|');
+                showMorePicPathCache = showMorePicPathCache.TrimEnd('|');
+                showMorePicLoactionCache = showMorePicLoactionCache.TrimEnd('|');
+                showMorePicSizeCache = showMorePicSizeCache.TrimEnd('|');
                 //写入文件
+                //游戏
                 INIHelper.Write("Base", "lastIndex", lastIndex.ToString(), outputPath + "data\\gConfig.wggproj");
                 INIHelper.Write("Character", "names", characternameCache, outputPath + "data\\gConfig.wggproj");
                 INIHelper.Write("Dialog", "texts", dialogCache, outputPath + "data\\gConfig.wggproj");
@@ -1146,6 +1357,11 @@ namespace GalGM
                 INIHelper.Write("Base", "bgPicPartPath", bgPicPartPathCache, outputPath + "data\\gConfig.wggproj");
                 INIHelper.Write("Base", "firstBgPicPath", INIHelper.Read("Image", "firstPic", "nil", $"{workSpace}Resources.resg"), outputPath + "data\\gConfig.wggproj");
                 INIHelper.Write("Base", "isEnc", "false", outputPath + "data\\gConfig.wggproj");
+                INIHelper.Write("MorePic", "index", showMorePicIndexCache, outputPath + "data\\gConfig.wggproj");
+                INIHelper.Write("MorePic", "path", showMorePicPathCache, outputPath + "data\\gConfig.wggproj");
+                INIHelper.Write("MorePic", "location", showMorePicLoactionCache, outputPath + "data\\gConfig.wggproj");
+                INIHelper.Write("MorePic", "size", showMorePicSizeCache, outputPath + "data\\gConfig.wggproj");
+                //主菜单
                 INIHelper.Write("Base", "isShowMainPic", isShowMainPic.ToString(), outputPath + "data\\mConfig.wggproj");
                 INIHelper.Write("Base", "mainPicPath", mainPicPath, outputPath + "data\\mConfig.wggproj");
                 INIHelper.Write("Base", "isPlayMainBGM", isUsingMainBGM.ToString(), outputPath + "data\\mConfig.wggproj");

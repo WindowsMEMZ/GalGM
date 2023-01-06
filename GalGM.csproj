@@ -299,6 +299,7 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="README.md" />
     <None Include="Resources\屏幕截图 2022-12-28 211959.png" />
   </ItemGroup>
   <ItemGroup>
