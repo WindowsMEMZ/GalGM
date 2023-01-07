@@ -2083,24 +2083,31 @@ namespace GalGM
         public static string NetGet(string url, bool isFix = true)
         {
             string result = "";
-            HttpWebRequest req = (HttpWebRequest)WebRequest.Create(url);
-            HttpWebResponse resp = (HttpWebResponse)req.GetResponse();
-            Stream stream = resp.GetResponseStream();
             try
             {
-                //获取内容
-                using (StreamReader reader = new StreamReader(stream))
+                HttpWebRequest req = (HttpWebRequest)WebRequest.Create(url);
+                HttpWebResponse resp = (HttpWebResponse)req.GetResponse();
+                Stream stream = resp.GetResponseStream();
+                try
                 {
-                    result = reader.ReadToEnd();
+                    //获取内容
+                    using (StreamReader reader = new StreamReader(stream))
+                    {
+                        result = reader.ReadToEnd();
+                    }
+                }
+                finally
+                {
+                    stream.Close();
+                }
+                if (isFix)
+                {
+                    result = result.TrimStart('\"').TrimEnd('\"');
                 }
             }
-            finally
-            {
-                stream.Close();
-            }
-            if (isFix)
-            {
-                result = result.TrimStart('\"').TrimEnd('\"');
+            catch
+            { 
+                
             }
             return result;
         }
