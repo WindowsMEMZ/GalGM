@@ -113,6 +113,12 @@
     <Compile Include="About.Designer.cs">
       <DependentUpon>About.cs</DependentUpon>
     </Compile>
+    <Compile Include="BugReporter.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="BugReporter.Designer.cs">
+      <DependentUpon>BugReporter.cs</DependentUpon>
+    </Compile>
     <Compile Include="BuildStatus.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -221,6 +227,9 @@
     </Compile>
     <EmbeddedResource Include="About.resx">
       <DependentUpon>About.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="BugReporter.resx">
+      <DependentUpon>BugReporter.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="BuildStatus.resx">
       <DependentUpon>BuildStatus.cs</DependentUpon>

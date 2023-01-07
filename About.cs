@@ -21,7 +21,7 @@ namespace GalGM
         {
             if (Environment.Is64BitOperatingSystem)
             {
-                label2.Text = "GalGM 0.2.0 (64位) by WindowsMEMZ - Preview";
+                label2.Text = "GalGM 0.3.0 (64位) by WindowsMEMZ - Preview";
             }
         }
 

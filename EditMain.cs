@@ -7,6 +7,7 @@ using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -173,88 +174,104 @@ namespace GalGM
 
         private void EditMain_Load(object sender, EventArgs e)
         {
-            label1.Text = INIHelper.Read("Base", "name", "ProjectName", nowPath);
-            exeConfig = INIHelper.Read("Base", "exeConfig", "Debug", nowPath);
-            生成ProjectNameUToolStripMenuItem.Text = $"生成 {label1.Text} (&U)";
-            comboBox1.SelectedIndex = 0;
-            if (exeConfig == "Debug")
+            try
             {
-                toolStripComboBox1.SelectedIndex = 0;
-            }
-            else
-            {
-                toolStripComboBox1.SelectedIndex = 1;
-            }
-            //读取资源文件
-            if (File.Exists(workSpace + "Resources.resg"))
-            {
-                int t = int.Parse(INIHelper.Read("Image", "total", "0", workSpace + "Resources.resg"));
-                for (int i = 0; i <= t; i++)
+                label1.Text = INIHelper.Read("Base", "name", "ProjectName", nowPath);
+                exeConfig = INIHelper.Read("Base", "exeConfig", "Debug", nowPath);
+                生成ProjectNameUToolStripMenuItem.Text = $"生成 {label1.Text} (&U)";
+                comboBox1.SelectedIndex = 0;
+                if (exeConfig == "Debug")
                 {
-                    string path = INIHelper.Read("Image", $"path{i + 1}", "nil", workSpace + "Resources.resg");
-                    if (path != "nil")
+                    toolStripComboBox1.SelectedIndex = 0;
+                }
+                else
+                {
+                    toolStripComboBox1.SelectedIndex = 1;
+                }
+                //读取资源文件
+                if (File.Exists(workSpace + "Resources.resg"))
+                {
+                    int t = int.Parse(INIHelper.Read("Image", "total", "0", workSpace + "Resources.resg"));
+                    for (int i = 0; i <= t; i++)
                     {
-                        FileStream fs = File.OpenRead(path);
-                        long fileLength = fs.Length;
-                        byte[] image = new byte[fileLength];
-                        fs.Read(image, 0, (int)fileLength);
-                        Image result = Image.FromStream(fs);
-                        imageList1.Images.Add(result);
-                        string name = INIHelper.Read("Image", $"name{i + 1}", "nil", workSpace + "Resources.resg");
-                        listView2.Items.Add(name, imageList1.Images.Count - 1);
-                        imagePaths.Add(path);
-                        imageNames.Add(name);
+                        string path = INIHelper.Read("Image", $"path{i + 1}", "nil", workSpace + "Resources.resg");
+                        if (path != "nil")
+                        {
+                            FileStream fs = File.OpenRead(path);
+                            long fileLength = fs.Length;
+                            byte[] image = new byte[fileLength];
+                            fs.Read(image, 0, (int)fileLength);
+                            Image result = Image.FromStream(fs);
+                            imageList1.Images.Add(result);
+                            string name = INIHelper.Read("Image", $"name{i + 1}", "nil", workSpace + "Resources.resg");
+                            listView2.Items.Add(name, imageList1.Images.Count - 1);
+                            imagePaths.Add(path);
+                            imageNames.Add(name);
+                        }
+                    }
+                    int tS = int.Parse(INIHelper.Read("Sound", "total", "0", workSpace + "Resources.resg"));
+                    for (int i = 0; i <= tS; i++)
+                    {
+                        string path = INIHelper.Read("Sound", $"path{i + 1}", "nil", workSpace + "Resources.resg");
+                        if (path != "nil")
+                        {
+                            string name = INIHelper.Read("Sound", $"name{i + 1}", "nil", workSpace + "Resources.resg");
+                            ListViewItem item = new ListViewItem();
+                            item.SubItems[0].Text = name;
+                            item.SubItems.Add(path);
+                            item.ForeColor = Color.White;
+                            listView3.Items.Add(item);
+                            soundPaths.Add(path);
+                            soundNames.Add(name);
+                        }
                     }
                 }
-                int tS = int.Parse(INIHelper.Read("Sound", "total", "0", workSpace + "Resources.resg"));
-                for (int i = 0; i <= tS; i++)
+                else
                 {
-                    string path = INIHelper.Read("Sound", $"path{i + 1}", "nil", workSpace + "Resources.resg");
-                    if (path != "nil")
-                    {
-                        string name = INIHelper.Read("Sound", $"name{i + 1}", "nil", workSpace + "Resources.resg");
-                        ListViewItem item = new ListViewItem();
-                        item.SubItems[0].Text = name;
-                        item.SubItems.Add(path);
-                        item.ForeColor = Color.White;
-                        listView3.Items.Add(item);
-                        soundPaths.Add(path);
-                        soundNames.Add(name);
-                    }
+                    File.Create(workSpace + "Resources.resg").Close();
                 }
-            }
-            else
-            {
-                File.Create(workSpace + "Resources.resg").Close();
-            }
-            //读取对话文件
-            if (File.Exists(workSpace + "Dialogs.gc"))
-            {
-                FileStream fs = new FileStream(workSpace + "Dialogs.gc", FileMode.Open, FileAccess.Read);
-                StreamReader sr = new StreamReader(fs);
-                richTextBox1.Text = sr.ReadToEnd();
-                sr.Close();
-                fs.Close();
-            }
-            else
-            {
-                File.Create(workSpace + "Dialogs.gc").Close();
-            }
-            //读取首图
-            if (File.Exists(INIHelper.Read("Image", "firstPic", "nil", $"{workSpace}Resources.resg")))
-            {
-                isFirstPicAdded = true;
-            }
-            //读取项目设置
-            if (bool.Parse(INIHelper.Read("Setting", "isEncryption", "false", nowPath)))
-            {
-                isEncryption = true;
-                checkBox1.Checked = true;
-            }
-            
-            CheckCodes();
+                //读取对话文件
+                if (File.Exists(workSpace + "Dialogs.gc"))
+                {
+                    FileStream fs = new FileStream(workSpace + "Dialogs.gc", FileMode.Open, FileAccess.Read);
+                    StreamReader sr = new StreamReader(fs);
+                    richTextBox1.Text = sr.ReadToEnd();
+                    sr.Close();
+                    fs.Close();
+                }
+                else
+                {
+                    File.Create(workSpace + "Dialogs.gc").Close();
+                }
+                //读取首图
+                if (File.Exists(INIHelper.Read("Image", "firstPic", "nil", $"{workSpace}Resources.resg")))
+                {
+                    isFirstPicAdded = true;
+                }
+                //读取项目设置
+                if (bool.Parse(INIHelper.Read("Setting", "isEncryption", "false", nowPath)))
+                {
+                    isEncryption = true;
+                    checkBox1.Checked = true;
+                }
 
-            isSavedLast = true;
+                CheckCodes();
+
+                isSavedLast = true;
+
+                string latestVer = NetGet("http://api.darock.top/galgm/getnew");
+                if (latestVer != "0.2.0 Preview 1")
+                {
+                    groupBox1.Visible = true;
+                }
+            }
+            catch (Exception ex)
+            {
+                SaveFiles();
+                string exStr = ex.ToString().Replace("\n", "{LF}").Replace("\r", "{CR}").Replace("/", "{Slash}").Replace("\\", "{Backslash}").Replace("%", "{Percent}").Replace("?", "{Question}").Replace("&", "{And}").Replace("$", "{Dollar}").Replace("@", "{At}").Replace("#", "{Hash}");
+                BugReporter reporter = new BugReporter("EditMainLoading", exStr);
+                reporter.ShowDialog();
+            }
         }
 
         private void button1_Click(object sender, EventArgs e)
@@ -323,141 +340,153 @@ namespace GalGM
         //要不断更新的内容
         private void timer1_Tick(object sender, EventArgs e)
         {
-            //调试输出
-            switch (comboBox1.SelectedIndex)
+            try
             {
-                case 0:
-                    textBox1.Text = buildOutput;
-                    break;
-                case 1:
-                    textBox1.Text = debugOutput;
-                    break;
-                default:
-                    break;
-            }
-            //右下角显示行数
-            int lineIndex = richTextBox1.GetFirstCharIndexOfCurrentLine();
-            toolStripButton8.Text = $"行: {richTextBox1.GetLineFromCharIndex(lineIndex) + 1}";
-            toolStripButton9.Text = $"字符: {richTextBox1.SelectionStart - lineIndex + 1}";
-            //工具栏显示错误和警告
-            int eLength = errorItems.Count;
-            int wLength = warningItems.Count;
-            if (eLength != 0 || wLength != 0)
-            {
-                toolStripButton5.Visible = false;
-                toolStripButton6.Visible = true;
-                toolStripButton7.Visible = true;
-                toolStripButton6.Text = eLength.ToString();
-                toolStripButton7.Text = wLength.ToString();
-            }
-            else
-            {
-                toolStripButton5.Visible = true;
-                toolStripButton6.Visible = false;
-                toolStripButton7.Visible = false;
-            }
-            //检测是否正在运行
-            if (isRunning)
-            {
-                string projectName = INIHelper.Read("Base", "name", "ProjectName", nowPath);
-                int t = 0;
-                Process[] ps = Process.GetProcesses();
-                for (int i = 0; i < ps.Length; i++)
+                //调试输出
+                switch (comboBox1.SelectedIndex)
                 {
-                    if (ps[i].ProcessName == projectName)
-                    {
-                        if (isStopDebug)
-                        {
-                            ps[i].Kill();
-                            isStopDebug = false;
-                        }
-                        t++;
+                    case 0:
+                        textBox1.Text = buildOutput;
                         break;
-                    }
+                    case 1:
+                        textBox1.Text = debugOutput;
+                        break;
+                    default:
+                        break;
                 }
-                if (t == 0)
+                //右下角显示行数
+                int lineIndex = richTextBox1.GetFirstCharIndexOfCurrentLine();
+                toolStripButton8.Text = $"行: {richTextBox1.GetLineFromCharIndex(lineIndex) + 1}";
+                toolStripButton9.Text = $"字符: {richTextBox1.SelectionStart - lineIndex + 1}";
+                //工具栏显示错误和警告
+                int eLength = errorItems.Count;
+                int wLength = warningItems.Count;
+                if (eLength != 0 || wLength != 0)
                 {
-                    if (INIHelper.Read("Base", "exitCode", "0", $"{workSpace}bin\\{exeConfig}\\GalGR.gds") == "0")
+                    toolStripButton5.Visible = false;
+                    toolStripButton6.Visible = true;
+                    toolStripButton7.Visible = true;
+                    toolStripButton6.Text = eLength.ToString();
+                    toolStripButton7.Text = wLength.ToString();
+                }
+                else
+                {
+                    toolStripButton5.Visible = true;
+                    toolStripButton6.Visible = false;
+                    toolStripButton7.Visible = false;
+                }
+                //检测是否正在运行
+                if (isRunning)
+                {
+                    string projectName = INIHelper.Read("Base", "name", "ProjectName", nowPath);
+                    int t = 0;
+                    Process[] ps = Process.GetProcesses();
+                    for (int i = 0; i < ps.Length; i++)
                     {
-                        statusStrip1.BackColor = Color.FromArgb(66, 66, 66);
-                        toolStripButton12.Enabled = false;
-                        toolStripButton11.Enabled = false;
-                        toolStripButton3.Enabled = true;
-                        toolStripButton4.Enabled = true;
-                        toolStripButton10.Enabled = true;
-                        isRunning = false;
-                        isWatchOpened = false;
-                    }
-                    else
-                    {
-                        if (!isStopDebug) {
-                            if (!isThrowed) {
-                                //调试错误处理
-                                exitCode = INIHelper.Read("Base", "exitCode", "0", $"{workSpace}bin\\{exeConfig}\\GalGR.gds");
-                                errorDetail = INIHelper.Read("Error", "detail", "未定义的错误", $"{workSpace}bin\\{exeConfig}\\GalGR.gds");
-                                errorIndex = int.Parse(INIHelper.Read("Error", "index", "1", $"{workSpace}bin\\{exeConfig}\\GalGR.gds"));
-                                string[] lineText = richTextBox1.Text.Split('\n');
-                                int a = 0;
-                                for (int i = 0; i < lineText.Length && i < errorIndex; i++)
-                                {
-                                    if (!string.IsNullOrEmpty(lineText[i]))
-                                    {
-                                        if (lineText[i][0] == '#' || lineText[i][0] == '^' || lineText[i][0] == '&' || lineText[i][0] == '~')
-                                        {
-                                            a++;
-                                        }
-                                    }
-                                }
-                                if (errorIndex + a - 1 >= 0)
-                                {
-                                    SelectLine(errorIndex + a - 1);
-                                    richTextBox1.SelectionBackColor = Color.FromArgb(124, 59, 59);
-                                    currentErrorIndex = errorIndex + a - 1;
-                                }
-                                else
-                                {
-                                    SelectLine(0);
-                                    richTextBox1.SelectionBackColor = Color.FromArgb(124, 59, 59);
-                                    currentErrorIndex = 0;
-                                }
-                                debugPrint($"引发的异常: “{@errorDetail}” (位于 对话 中)");
-                                debugPrint($"程序 “{projectName}.exe” 已退出，返回值为 {exitCode}。");
-                                isThrowed = true;
+                        if (ps[i].ProcessName == projectName)
+                        {
+                            if (isStopDebug)
+                            {
+                                ps[i].Kill();
+                                isStopDebug = false;
                             }
+                            t++;
+                            break;
+                        }
+                    }
+                    if (t == 0)
+                    {
+                        if (INIHelper.Read("Base", "exitCode", "0", $"{workSpace}bin\\{exeConfig}\\GalGR.gds") == "0")
+                        {
+                            statusStrip1.BackColor = Color.FromArgb(66, 66, 66);
+                            toolStripButton12.Enabled = false;
+                            toolStripButton11.Enabled = false;
+                            toolStripButton3.Enabled = true;
+                            toolStripButton4.Enabled = true;
+                            toolStripButton10.Enabled = true;
+                            isRunning = false;
+                            isWatchOpened = false;
                         }
                         else
                         {
-                            isStopDebug = false;
-                            isThrowed = false;
-                            File.Delete($"{workSpace}bin\\{exeConfig}\\GalGR.gds");
-                            SelectLine(currentErrorIndex);
-                            richTextBox1.SelectionBackColor = Color.FromArgb(30, 30, 30);
+                            if (!isStopDebug)
+                            {
+                                if (!isThrowed)
+                                {
+                                    //调试错误处理
+                                    exitCode = INIHelper.Read("Base", "exitCode", "0", $"{workSpace}bin\\{exeConfig}\\GalGR.gds");
+                                    errorDetail = INIHelper.Read("Error", "detail", "未定义的错误", $"{workSpace}bin\\{exeConfig}\\GalGR.gds");
+                                    errorIndex = int.Parse(INIHelper.Read("Error", "index", "1", $"{workSpace}bin\\{exeConfig}\\GalGR.gds"));
+                                    string[] lineText = richTextBox1.Text.Split('\n');
+                                    int a = 0;
+                                    for (int i = 0; i < lineText.Length && i < errorIndex; i++)
+                                    {
+                                        if (!string.IsNullOrEmpty(lineText[i]))
+                                        {
+                                            if (lineText[i][0] == '#' || lineText[i][0] == '^' || lineText[i][0] == '&' || lineText[i][0] == '~')
+                                            {
+                                                a++;
+                                            }
+                                        }
+                                    }
+                                    if (errorIndex + a - 1 >= 0)
+                                    {
+                                        SelectLine(errorIndex + a - 1);
+                                        richTextBox1.SelectionBackColor = Color.FromArgb(124, 59, 59);
+                                        currentErrorIndex = errorIndex + a - 1;
+                                    }
+                                    else
+                                    {
+                                        SelectLine(0);
+                                        richTextBox1.SelectionBackColor = Color.FromArgb(124, 59, 59);
+                                        currentErrorIndex = 0;
+                                    }
+                                    debugPrint($"引发的异常: “{@errorDetail}” (位于 对话 中)");
+                                    debugPrint($"程序 “{projectName}.exe” 已退出，返回值为 {exitCode}。");
+                                    isThrowed = true;
+                                }
+                            }
+                            else
+                            {
+                                isStopDebug = false;
+                                isThrowed = false;
+                                File.Delete($"{workSpace}bin\\{exeConfig}\\GalGR.gds");
+                                SelectLine(currentErrorIndex);
+                                richTextBox1.SelectionBackColor = Color.FromArgb(30, 30, 30);
+                            }
                         }
                     }
+                    else if (!isWatchOpened && !isCloseDebugging && bool.Parse(INIHelper.Read("Debug", "openDebugTool", "true", "./editor.config")))
+                    {
+                        DebugWatch w = new DebugWatch(nowPath, workSpace, exeConfig) { TabText = "诊断工具" };
+                        w.Show(this.dockPanel1, DockState.DockRight);
+                        isWatchOpened = true;
+                    }
                 }
-                else if (!isWatchOpened && !isCloseDebugging && bool.Parse(INIHelper.Read("Debug", "openDebugTool", "true", "./editor.config")))
+                if (isFirstPicAdded)
                 {
-                    DebugWatch w = new DebugWatch(nowPath, workSpace, exeConfig) { TabText = "诊断工具"};
-                    w.Show(this.dockPanel1, DockState.DockRight);
-                    isWatchOpened = true;
+                    label9.ForeColor = Color.Green;
                 }
+                else
+                {
+                    label9.ForeColor = Color.Red;
+                }
+                //更新窗口位置
+                wLocation = this.Location;
+                wWidth = this.Width;
+                //更新其它窗口组件
+                //Dialogs dialogs = new Dialogs();
+                //richTextBox1.Text = dialogs.GetText;
+                //ErrorList errorList = new ErrorList();
+                //listView1 = errorList.GetListView;
             }
-            if (isFirstPicAdded)
+            catch (Exception ex)
             {
-                label9.ForeColor = Color.Green;
+                SaveFiles();
+                string exStr = ex.ToString().Replace("\n", "{LF}").Replace("\r", "{CR}").Replace("/", "{Slash}").Replace("\\", "{Backslash}").Replace("%", "{Percent}").Replace("?", "{Question}").Replace("&", "{And}").Replace("$", "{Dollar}").Replace("@", "{At}").Replace("#", "{Hash}");
+                BugReporter reporter = new BugReporter("Timer1", exStr);
+                reporter.ShowDialog();
             }
-            else
-            {
-                label9.ForeColor = Color.Red;
-            }
-            //更新窗口位置
-            wLocation = this.Location;
-            wWidth = this.Width;
-            //更新其它窗口组件
-            //Dialogs dialogs = new Dialogs();
-            //richTextBox1.Text = dialogs.GetText;
-            //ErrorList errorList = new ErrorList();
-            //listView1 = errorList.GetListView;
         }
 
         private void button5_Click(object sender, EventArgs e)
@@ -519,470 +548,501 @@ namespace GalGM
 
         private void CheckCodes()
         {
-            if (!string.IsNullOrEmpty(richTextBox1.Text))
+            try
             {
-                if (richTextBox1.Text[0] != '#' && richTextBox1.Text[0] != '&')
+                if (!string.IsNullOrEmpty(richTextBox1.Text))
                 {
-                    if (errorItems.Count < 1)
+                    if (richTextBox1.Text[0] != '#' && richTextBox1.Text[0] != '&')
                     {
-                        ThrowAnError("GC0001", "代码应以\'#\'或\'&\'开始", "对话", 1);
-                    }
-                }
-                else
-                {
-                    if (errorItems.Count >= 1)
-                    {
-                        DeleteAnError(1);
-                    }
-                }
-
-                string[] lineText = richTextBox1.Text.Split('\n');
-                for (int i = 0; i < lineText.Length; i++)
-                {
-                    if (!string.IsNullOrEmpty(lineText[i]))
-                    {
-                        string[] vString = lineText[i].Split('|'); //分割文本和音频
-                        if (vString.Length == 2) //Length为2时则为一个音频一个对话
+                        if (errorItems.Count < 1)
                         {
-                            if (!string.IsNullOrEmpty(vString[1]))
+                            ThrowAnError("GC0001", "代码应以\'#\'或\'&\'开始", "对话", 1);
+                        }
+                    }
+                    else
+                    {
+                        if (errorItems.Count >= 1)
+                        {
+                            DeleteAnError(1);
+                        }
+                    }
+
+                    string[] lineText = richTextBox1.Text.Split('\n');
+                    for (int i = 0; i < lineText.Length; i++)
+                    {
+                        if (!string.IsNullOrEmpty(lineText[i]))
+                        {
+                            string[] vString = lineText[i].Split('|'); //分割文本和音频
+                            if (vString.Length == 2) //Length为2时则为一个音频一个对话
                             {
-                                if (soundNames.IndexOf(vString[1]) == -1) //找不到资源时
+                                if (!string.IsNullOrEmpty(vString[1]))
                                 {
-                                    if (imageNames.IndexOf(vString[1]) != -1) //在图片类型中找到时
+                                    if (soundNames.IndexOf(vString[1]) == -1) //找不到资源时
                                     {
-                                        DeleteAnError((uint)i + 1, gc0003Lines);
-                                        ThrowAnError("GC0006", "图片类型不能应用于音频处", "对话", i + 1);
-                                        gc0006Lines.Add((uint)i + 1);
+                                        if (imageNames.IndexOf(vString[1]) != -1) //在图片类型中找到时
+                                        {
+                                            DeleteAnError((uint)i + 1, gc0003Lines);
+                                            ThrowAnError("GC0006", "图片类型不能应用于音频处", "对话", i + 1);
+                                            gc0006Lines.Add((uint)i + 1);
+                                        }
+                                        else //仍未找到
+                                        {
+                                            DeleteAnError((uint)i + 1, gc0003Lines);
+                                            ThrowAnError("GC0003", $"资源中未包含\"{vString[1]}\"的定义", "对话", i + 1);
+                                            gc0003Lines.Add((uint)i + 1);
+                                        }
                                     }
-                                    else //仍未找到
+                                    else //找到资源时
                                     {
-                                        DeleteAnError((uint)i + 1, gc0003Lines);
-                                        ThrowAnError("GC0003", $"资源中未包含\"{vString[1]}\"的定义", "对话", i + 1);
-                                        gc0003Lines.Add((uint)i + 1);
+                                        if (gc0003Lines.IndexOf((uint)i + 1) != -1) //已报错时
+                                        {
+                                            DeleteAnError((uint)i + 1, gc0003Lines);
+                                        }
+                                        if (gc0006Lines.IndexOf((uint)i + 1) != -1) //已报错时
+                                        {
+                                            DeleteAnError((uint)i + 1, gc0006Lines);
+                                        }
                                     }
                                 }
-                                else //找到资源时
+                                else
                                 {
-                                    if (gc0003Lines.IndexOf((uint)i + 1) != -1) //已报错时
+                                    if (gc0004Lines.IndexOf((uint)i + 1) == -1) //未报错时
                                     {
-                                        DeleteAnError((uint)i + 1, gc0003Lines);
+                                        ThrowAnError("GC0004", "表达式项\"|\"无效", "对话", i + 1);
+                                        gc0004Lines.Add((uint)i + 1);
                                     }
-                                    if (gc0006Lines.IndexOf((uint)i + 1) != -1) //已报错时
+                                }
+
+                                if (lineText[i][0] == '#' || lineText[i][0] == '&')
+                                {
+                                    if (gc0005Lines.IndexOf((uint)i + 1) == -1) //未报错时
                                     {
-                                        DeleteAnError((uint)i + 1, gc0006Lines);
+                                        ThrowAnError("GC0005", "意外的字符\"|\"", "对话", i + 1);
+                                        gc0005Lines.Add((uint)i + 1);
                                     }
+                                }
+
+                                if (gc0004Lines.IndexOf((uint)i + 1) != -1) //已报错时
+                                {
+                                    DeleteAnError((uint)i + 1, gc0004Lines);
                                 }
                             }
-                            else
+                            else if (vString.Length >= 3) //一行出现多个‘|’时
                             {
                                 if (gc0004Lines.IndexOf((uint)i + 1) == -1) //未报错时
                                 {
                                     ThrowAnError("GC0004", "表达式项\"|\"无效", "对话", i + 1);
                                     gc0004Lines.Add((uint)i + 1);
                                 }
-                            }
 
-                            if (lineText[i][0] == '#' || lineText[i][0] == '&')
-                            {
-                                if (gc0005Lines.IndexOf((uint)i + 1) == -1) //未报错时
+                                if (lineText[i][0] == '#' || lineText[i][0] == '&')
                                 {
-                                    ThrowAnError("GC0005", "意外的字符\"|\"", "对话", i + 1);
-                                    gc0005Lines.Add((uint)i + 1);
+                                    if (gc0005Lines.IndexOf((uint)i + 1) == -1) //未报错时
+                                    {
+                                        ThrowAnError("GC0005", "意外的字符\"|\"", "对话", i + 1);
+                                        gc0005Lines.Add((uint)i + 1);
+                                    }
+                                }
+                            }
+                            else if (vString.Length != 0)
+                            {
+                                if (gc0004Lines.IndexOf((uint)i + 1) != -1) //已报错时
+                                {
+                                    DeleteAnError((uint)i + 1, gc0004Lines);
+                                }
+                                if (gc0003Lines.IndexOf((uint)i + 1) != -1) //已报错时
+                                {
+                                    DeleteAnError((uint)i + 1, gc0003Lines);
+                                }
+                                if (gc0005Lines.IndexOf((uint)i + 1) != -1) //已报错时
+                                {
+                                    DeleteAnError((uint)i + 1, gc0005Lines);
                                 }
                             }
 
-                            if (gc0004Lines.IndexOf((uint)i + 1) != -1) //已报错时
+                            if (lineText[i][0] == '&')
                             {
-                                DeleteAnError((uint)i + 1, gc0004Lines);
-                            }
-                        }
-                        else if (vString.Length >= 3) //一行出现多个‘|’时
-                        {
-                            if (gc0004Lines.IndexOf((uint)i + 1) == -1) //未报错时
-                            {
-                                ThrowAnError("GC0004", "表达式项\"|\"无效", "对话", i + 1);
-                                gc0004Lines.Add((uint)i + 1);
+                                string resName = lineText[i].TrimStart('&');
+                                if (!string.IsNullOrEmpty(resName))
+                                {
+                                    if (soundNames.IndexOf(resName) == -1) //找不到资源时
+                                    {
+                                        if (imageNames.IndexOf(resName) != -1) //在图片类型中找到时
+                                        {
+                                            DeleteAnError((uint)i + 1, gc0003Lines);
+                                            ThrowAnError("GC0006", "图片类型不能应用于音频处", "对话", i + 1);
+                                            gc0006Lines.Add((uint)i + 1);
+                                        }
+                                        else //仍未找到
+                                        {
+                                            DeleteAnError((uint)i + 1, gc0003Lines);
+                                            ThrowAnError("GC0003", $"资源中未包含\"{resName}\"的定义", "对话", i + 1);
+                                            gc0003Lines.Add((uint)i + 1);
+                                        }
+                                    }
+                                    else //找到资源时
+                                    {
+                                        if (gc0003Lines.IndexOf((uint)i + 1) != -1) //已报错时
+                                        {
+                                            DeleteAnError((uint)i + 1, gc0003Lines);
+                                        }
+                                        if (gc0006Lines.IndexOf((uint)i + 1) != -1) //已报错时
+                                        {
+                                            DeleteAnError((uint)i + 1, gc0006Lines);
+                                        }
+                                    }
+
+                                    if (gc0004Lines.IndexOf((uint)i + 1) != -1)
+                                    {
+                                        DeleteAnError((uint)i + 1, gc0004Lines);
+                                    }
+                                }
+                                else
+                                {
+                                    if (gc0004Lines.IndexOf((uint)i + 1) == -1) //未报错时
+                                    {
+                                        ThrowAnError("GC0004", "表达式项\"&\"无效", "对话", i + 1);
+                                        gc0004Lines.Add((uint)i + 1);
+                                    }
+                                }
                             }
 
-                            if (lineText[i][0] == '#' || lineText[i][0] == '&')
+                            if (lineText[i][0] == '~')
                             {
-                                if (gc0005Lines.IndexOf((uint)i + 1) == -1) //未报错时
+                                string resName = lineText[i].TrimStart('~');
+                                if (!string.IsNullOrEmpty(resName))
                                 {
-                                    ThrowAnError("GC0005", "意外的字符\"|\"", "对话", i + 1);
-                                    gc0005Lines.Add((uint)i + 1);
+                                    if (imageNames.IndexOf(resName) == -1) //找不到资源时
+                                    {
+                                        if (soundNames.IndexOf(resName) != -1) //在音频类型中找到时
+                                        {
+                                            DeleteAnError((uint)i + 1, gc0003Lines);
+                                            ThrowAnError("GC0006", "音频类型不能应用于图片处", "对话", i + 1);
+                                            gc0006Lines.Add((uint)i + 1);
+                                        }
+                                        else //仍未找到
+                                        {
+                                            DeleteAnError((uint)i + 1, gc0003Lines);
+                                            ThrowAnError("GC0003", $"资源中未包含\"{resName}\"的定义", "对话", i + 1);
+                                            gc0003Lines.Add((uint)i + 1);
+                                        }
+                                    }
+                                    else //找到资源时
+                                    {
+                                        if (gc0003Lines.IndexOf((uint)i + 1) != -1) //已报错时
+                                        {
+                                            DeleteAnError((uint)i + 1, gc0003Lines);
+                                        }
+                                        if (gc0006Lines.IndexOf((uint)i + 1) != -1) //已报错时
+                                        {
+                                            DeleteAnError((uint)i + 1, gc0006Lines);
+                                        }
+                                    }
+
+                                    if (gc0004Lines.IndexOf((uint)i + 1) != -1)
+                                    {
+                                        DeleteAnError((uint)i + 1, gc0004Lines);
+                                    }
+                                }
+                                else
+                                {
+                                    if (gc0004Lines.IndexOf((uint)i + 1) == -1) //未报错时
+                                    {
+                                        ThrowAnError("GC0004", "表达式项\"~\"无效", "对话", i + 1);
+                                        gc0004Lines.Add((uint)i + 1);
+                                    }
+                                }
+                            }
+
+                            if (lineText[i][0] == '%')
+                            {
+                                if (lineText[i].Length > 1)
+                                {
+                                    DeleteAnError((uint)i + 1, gc0004Lines);
+                                    if (lineText[i][1] != '%')
+                                    {
+                                        string[] codes = lineText[i].Split('|');
+                                        if (codes.Length < 4 || codes.Length > 4)
+                                        {
+                                            DeleteAnError(i + 1);
+                                            if (codes.Length == 2)
+                                            {
+                                                ThrowAnError("GC0008", "未提供与“显示立绘(资源名|位置|大小|id)”的所需参数“大小”对应的参数", "对话", i + 1);
+                                            }
+                                            else if (codes.Length == 3)
+                                            {
+                                                ThrowAnError("GC0008", "未提供与“显示立绘(资源名|位置|大小|id)”的所需参数“id”对应的参数", "对话", i + 1);
+                                            }
+                                            else
+                                            {
+                                                ThrowAnError("GC0009", $"“显示立绘”方法没有采用{codes.Length}个参数的重载", "对话", i + 1);
+                                            }
+                                        }
+                                        else if (codes.Length == 4)
+                                        {
+                                            DeleteAnError(i + 1);
+                                            if (imageNames.IndexOf(codes[0].TrimStart('%')) == -1) //找不到图片资源时
+                                            {
+                                                if (soundNames.IndexOf(codes[0].TrimStart('%')) != -1) //找到音频资源时
+                                                {
+                                                    //DeleteAnError((uint)i + 1, gc0003Lines);
+                                                    ThrowAnError("GC0006", "音频类型不能应用于图片处", "对话", i + 1);
+                                                    gc0006Lines.Add((uint)i + 1);
+                                                }
+                                                else
+                                                {
+                                                    //DeleteAnError((uint)i + 1, gc0003Lines);
+                                                    ThrowAnError("GC0003", $"资源中未包含\"{codes[0].TrimStart('%')}\"的定义", "对话", i + 1);
+                                                    gc0003Lines.Add((uint)i + 1);
+                                                }
+                                            }
+
+                                            if (codes[1] != "Center")
+                                            {
+                                                if (codes[1] == "center")
+                                                {
+                                                    DeleteAnError(i + 1);
+                                                    ThrowAnError("GC0010", $"类型“位置”中不包含“{codes[1]}”选项或此类格式，是否指“Center”?", "对话", i + 1);
+                                                }
+                                                else
+                                                {
+                                                    string[] xyStr = codes[1].Split(',');
+                                                    if (xyStr.Length != 2)
+                                                    {
+                                                        DeleteAnError(i + 1);
+                                                        ThrowAnError("GC0010", $"类型“位置”中不包含“{codes[1]}”选项或此类格式", "对话", i + 1);
+                                                    }
+                                                    else
+                                                    {
+                                                        int outInt;
+                                                        bool status1 = int.TryParse(xyStr[0], out outInt);
+                                                        bool status2 = int.TryParse(xyStr[1], out outInt);
+                                                        if (status1 == false)
+                                                        {
+                                                            double outDouble;
+                                                            if (!double.TryParse(xyStr[0], out outDouble))
+                                                            {
+                                                                DeleteAnError(i + 1);
+                                                                ThrowAnError("GC0011", $"参数 1: 无法从文本转换为整数", "对话", i + 1);
+                                                            }
+                                                            else
+                                                            {
+                                                                DeleteAnError(i + 1);
+                                                                ThrowAnError("GC0011", $"参数 1: 无法从小数转换为整数", "对话", i + 1);
+                                                            }
+                                                        }
+                                                        if (status2 == false)
+                                                        {
+                                                            double outDouble;
+                                                            if (!double.TryParse(xyStr[0], out outDouble))
+                                                            {
+                                                                DeleteAnError(i + 1);
+                                                                ThrowAnError("GC0011", $"参数 2: 无法从文本转换为整数", "对话", i + 1);
+                                                            }
+                                                            else
+                                                            {
+                                                                DeleteAnError(i + 1);
+                                                                ThrowAnError("GC0011", $"参数 2: 无法从小数转换为整数", "对话", i + 1);
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                            if (codes[2] != "ZoomWindow" || codes[2] != "ZoomWindow")
+                                            {
+                                                if (codes[2] == "zoomwindow" || codes[2] == "Zoomwindow" || codes[2] == "zoomWindow" || codes[2] == "ZoomWindows" || codes[2] == "zoomwindows")
+                                                {
+                                                    DeleteAnError(i + 1);
+                                                    ThrowAnError("GC0010", $"类型“大小”中不包含“{codes[2]}”选项或此类格式，是否指“ZoomWindow”?", "对话", i + 1);
+                                                }
+                                                else if (codes[2] == "raw")
+                                                {
+                                                    DeleteAnError(i + 1);
+                                                    ThrowAnError("GC0010", $"类型“大小”中不包含“{codes[2]}”选项或此类格式，是否指“Raw”?", "对话", i + 1);
+                                                }
+                                                else
+                                                {
+                                                    string[] xyStr = codes[2].Split(',');
+                                                    if (xyStr.Length != 2)
+                                                    {
+                                                        DeleteAnError(i + 1);
+                                                        ThrowAnError("GC0010", $"类型“大小”中不包含“{codes[2]}”选项或此类格式", "对话", i + 1);
+                                                    }
+                                                    else
+                                                    {
+                                                        int outInt;
+                                                        bool status1 = int.TryParse(xyStr[0], out outInt);
+                                                        bool status2 = int.TryParse(xyStr[1], out outInt);
+                                                        if (status1 == false)
+                                                        {
+                                                            double outDouble;
+                                                            if (!double.TryParse(xyStr[0], out outDouble))
+                                                            {
+                                                                DeleteAnError(i + 1);
+                                                                ThrowAnError("GC0011", $"参数 1: 无法从文本转换为整数", "对话", i + 1);
+                                                            }
+                                                            else
+                                                            {
+                                                                DeleteAnError(i + 1);
+                                                                ThrowAnError("GC0011", $"参数 1: 无法从小数转换为整数", "对话", i + 1);
+                                                            }
+                                                        }
+                                                        if (status2 == false)
+                                                        {
+                                                            double outDouble;
+                                                            if (!double.TryParse(xyStr[0], out outDouble))
+                                                            {
+                                                                DeleteAnError(i + 1);
+                                                                ThrowAnError("GC0011", $"参数 2: 无法从文本转换为整数", "对话", i + 1);
+                                                            }
+                                                            else
+                                                            {
+                                                                DeleteAnError(i + 1);
+                                                                ThrowAnError("GC0011", $"参数 2: 无法从小数转换为整数", "对话", i + 1);
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                            bool status = int.TryParse(codes[3], out int o);
+                                            if (!status)
+                                            {
+                                                if (!double.TryParse(codes[3], out double outDouble))
+                                                {
+                                                    DeleteAnError(i + 1);
+                                                    ThrowAnError("GC0011", $"参数 3: 无法从文本转换为整数", "对话", i + 1);
+                                                }
+                                                else
+                                                {
+                                                    DeleteAnError(i + 1);
+                                                    ThrowAnError("GC0011", $"参数 3: 无法从小数转换为整数", "对话", i + 1);
+                                                }
+                                            }
+                                        }
+                                    }
+                                    else
+                                    {
+                                        bool status = int.TryParse(lineText[i].TrimStart('%').TrimStart('%'), out int o);
+                                        if (!status)
+                                        {
+                                            if (!double.TryParse(lineText[i].TrimStart('%').TrimStart('%'), out double outDouble))
+                                            {
+                                                DeleteAnError(i + 1);
+                                                ThrowAnError("GC0011", $"参数 0: 无法从文本转换为整数", "对话", i + 1);
+                                            }
+                                            else
+                                            {
+                                                DeleteAnError(i + 1);
+                                                ThrowAnError("GC0011", $"参数 0: 无法从小数转换为整数", "对话", i + 1);
+                                            }
+                                        }
+                                    }
+                                }
+                                else
+                                {
+                                    ThrowAnError("GC0004", "表达式项\"%\"无效", "对话", i + 1);
+                                    gc0004Lines.Add((uint)i + 1);
                                 }
                             }
                         }
-                        else if (vString.Length != 0)
+                        else //行为空时
                         {
-                            if (gc0004Lines.IndexOf((uint)i + 1) != -1) //已报错时
-                            {
-                                DeleteAnError((uint)i + 1, gc0004Lines);
-                            }
                             if (gc0003Lines.IndexOf((uint)i + 1) != -1) //已报错时
                             {
                                 DeleteAnError((uint)i + 1, gc0003Lines);
                             }
-                            if (gc0005Lines.IndexOf((uint)i + 1) != -1) //已报错时
+                            if (gc0004Lines.IndexOf((uint)i + 1) != -1) //已报错时
                             {
-                                DeleteAnError((uint)i + 1, gc0005Lines);
+                                DeleteAnError((uint)i + 1, gc0004Lines);
                             }
-                        }
-
-                        if (lineText[i][0] == '&')
-                        {
-                            string resName = lineText[i].TrimStart('&');
-                            if (!string.IsNullOrEmpty(resName))
+                            if (gc0006Lines.IndexOf((uint)i + 1) != -1) //已报错时
                             {
-                                if (soundNames.IndexOf(resName) == -1) //找不到资源时
-                                {
-                                    if (imageNames.IndexOf(resName) != -1) //在图片类型中找到时
-                                    {
-                                        DeleteAnError((uint)i + 1, gc0003Lines);
-                                        ThrowAnError("GC0006", "图片类型不能应用于音频处", "对话", i + 1);
-                                        gc0006Lines.Add((uint)i + 1);
-                                    }
-                                    else //仍未找到
-                                    {
-                                        DeleteAnError((uint)i + 1, gc0003Lines);
-                                        ThrowAnError("GC0003", $"资源中未包含\"{resName}\"的定义", "对话", i + 1);
-                                        gc0003Lines.Add((uint)i + 1);
-                                    }
-                                }
-                                else //找到资源时
-                                {
-                                    if (gc0003Lines.IndexOf((uint)i + 1) != -1) //已报错时
-                                    {
-                                        DeleteAnError((uint)i + 1, gc0003Lines);
-                                    }
-                                    if (gc0006Lines.IndexOf((uint)i + 1) != -1) //已报错时
-                                    {
-                                        DeleteAnError((uint)i + 1, gc0006Lines);
-                                    }
-                                }
-
-                                if (gc0004Lines.IndexOf((uint)i + 1) != -1)
-                                {
-                                    DeleteAnError((uint)i + 1, gc0004Lines);
-                                }
-                            }
-                            else
-                            {
-                                if (gc0004Lines.IndexOf((uint)i + 1) == -1) //未报错时
-                                {
-                                    ThrowAnError("GC0004", "表达式项\"&\"无效", "对话", i + 1);
-                                    gc0004Lines.Add((uint)i + 1);
-                                }
-                            }
-                        }
-
-                        if (lineText[i][0] == '~')
-                        {
-                            string resName = lineText[i].TrimStart('~');
-                            if (!string.IsNullOrEmpty(resName))
-                            {
-                                if (imageNames.IndexOf(resName) == -1) //找不到资源时
-                                {
-                                    if (soundNames.IndexOf(resName) != -1) //在音频类型中找到时
-                                    {
-                                        DeleteAnError((uint)i + 1, gc0003Lines);
-                                        ThrowAnError("GC0006", "音频类型不能应用于图片处", "对话", i + 1);
-                                        gc0006Lines.Add((uint)i + 1);
-                                    }
-                                    else //仍未找到
-                                    {
-                                        DeleteAnError((uint)i + 1, gc0003Lines);
-                                        ThrowAnError("GC0003", $"资源中未包含\"{resName}\"的定义", "对话", i + 1);
-                                        gc0003Lines.Add((uint)i + 1);
-                                    }
-                                }
-                                else //找到资源时
-                                {
-                                    if (gc0003Lines.IndexOf((uint)i + 1) != -1) //已报错时
-                                    {
-                                        DeleteAnError((uint)i + 1, gc0003Lines);
-                                    }
-                                    if (gc0006Lines.IndexOf((uint)i + 1) != -1) //已报错时
-                                    {
-                                        DeleteAnError((uint)i + 1, gc0006Lines);
-                                    }
-                                }
-
-                                if (gc0004Lines.IndexOf((uint)i + 1) != -1)
-                                {
-                                    DeleteAnError((uint)i + 1, gc0004Lines);
-                                }
-                            }
-                            else
-                            {
-                                if (gc0004Lines.IndexOf((uint)i + 1) == -1) //未报错时
-                                {
-                                    ThrowAnError("GC0004", "表达式项\"~\"无效", "对话", i + 1);
-                                    gc0004Lines.Add((uint)i + 1);
-                                }
-                            }
-                        }
-
-                        if (lineText[i][0] == '%')
-                        {
-                            string[] codes = lineText[i].Split('|');
-                            if (codes.Length == 2 || codes.Length > 3)
-                            {
-                                DeleteAnError(i + 1);
-                                if (codes.Length == 2)
-                                {
-                                    ThrowAnError("GC0008", "未提供与“显示立绘(资源名|位置|大小)”的所需参数“大小”对应的参数", "对话", i + 1);
-                                }
-                                else
-                                {
-                                    ThrowAnError("GC0009", $"“显示立绘”方法没有采用{codes.Length}个参数的重载", "对话", i + 1);
-                                }
-                            }
-                            else if (codes.Length == 3)
-                            {
-                                DeleteAnError(i + 1);
-                                if (imageNames.IndexOf(codes[0].TrimStart('%')) == -1) //找不到图片资源时
-                                {
-                                    if (soundNames.IndexOf(codes[0].TrimStart('%')) != -1) //找到音频资源时
-                                    {
-                                        //DeleteAnError((uint)i + 1, gc0003Lines);
-                                        ThrowAnError("GC0006", "音频类型不能应用于图片处", "对话", i + 1);
-                                        gc0006Lines.Add((uint)i + 1);
-                                    }
-                                    else
-                                    {
-                                        //DeleteAnError((uint)i + 1, gc0003Lines);
-                                        ThrowAnError("GC0003", $"资源中未包含\"{codes[0].TrimStart('%')}\"的定义", "对话", i + 1);
-                                        gc0003Lines.Add((uint)i + 1);
-                                    }
-                                }
-
-                                if (codes[1] != "Center")
-                                {
-                                    if (codes[1] == "center")
-                                    {
-                                        DeleteAnError(i + 1);
-                                        ThrowAnError("GC0010", $"类型“位置”中不包含“{codes[1]}”选项或此类格式，是否指“Center”?", "对话", i + 1);
-                                    }
-                                    else
-                                    {
-                                        string[] xyStr = codes[1].Split(',');
-                                        if (xyStr.Length != 2)
-                                        {
-                                            DeleteAnError(i + 1);
-                                            ThrowAnError("GC0010", $"类型“位置”中不包含“{codes[1]}”选项或此类格式", "对话", i + 1);
-                                        }
-                                        else
-                                        {
-                                            int outInt;
-                                            bool status1 = int.TryParse(xyStr[0], out outInt);
-                                            bool status2 = int.TryParse(xyStr[1], out outInt);
-                                            if (status1 == false)
-                                            {
-                                                double outDouble;
-                                                if (!double.TryParse(xyStr[0], out outDouble))
-                                                {
-                                                    DeleteAnError(i + 1);
-                                                    ThrowAnError("GC0011", $"参数 1: 无法从文本转换为整数", "对话", i + 1);
-                                                }
-                                                else
-                                                {
-                                                    DeleteAnError(i + 1);
-                                                    ThrowAnError("GC0011", $"参数 1: 无法从小数转换为整数", "对话", i + 1);
-                                                }
-                                            }
-                                            if (status2 == false)
-                                            {
-                                                double outDouble;
-                                                if (!double.TryParse(xyStr[0], out outDouble))
-                                                {
-                                                    DeleteAnError(i + 1);
-                                                    ThrowAnError("GC0011", $"参数 2: 无法从文本转换为整数", "对话", i + 1);
-                                                }
-                                                else
-                                                {
-                                                    DeleteAnError(i + 1);
-                                                    ThrowAnError("GC0011", $"参数 2: 无法从小数转换为整数", "对话", i + 1);
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                                else
-                                {
-                                    if (codes[2] != "ZoomWindow" || codes[2] != "ZoomWindow")
-                                    {
-                                        if (codes[2] == "zoomwindow" || codes[2] == "Zoomwindow" || codes[2] == "zoomWindow" || codes[2] == "ZoomWindows" || codes[2] == "zoomwindows")
-                                        {
-                                            DeleteAnError(i + 1);
-                                            ThrowAnError("GC0010", $"类型“大小”中不包含“{codes[2]}”选项或此类格式，是否指“ZoomWindow”?", "对话", i + 1);
-                                        }
-                                        else if (codes[2] == "raw")
-                                        {
-                                            DeleteAnError(i + 1);
-                                            ThrowAnError("GC0010", $"类型“大小”中不包含“{codes[2]}”选项或此类格式，是否指“Raw”?", "对话", i + 1);
-                                        }
-                                        else
-                                        {
-                                            string[] xyStr = codes[2].Split(',');
-                                            if (xyStr.Length != 2)
-                                            {
-                                                DeleteAnError(i + 1);
-                                                ThrowAnError("GC0010", $"类型“大小”中不包含“{codes[2]}”选项或此类格式", "对话", i + 1);
-                                            }
-                                            else
-                                            {
-                                                int outInt;
-                                                bool status1 = int.TryParse(xyStr[0], out outInt);
-                                                bool status2 = int.TryParse(xyStr[1], out outInt);
-                                                if (status1 == false)
-                                                {
-                                                    double outDouble;
-                                                    if (!double.TryParse(xyStr[0], out outDouble))
-                                                    {
-                                                        DeleteAnError(i + 1);
-                                                        ThrowAnError("GC0011", $"参数 1: 无法从文本转换为整数", "对话", i + 1);
-                                                    }
-                                                    else
-                                                    {
-                                                        DeleteAnError(i + 1);
-                                                        ThrowAnError("GC0011", $"参数 1: 无法从小数转换为整数", "对话", i + 1);
-                                                    }
-                                                }
-                                                if (status2 == false)
-                                                {
-                                                    double outDouble;
-                                                    if (!double.TryParse(xyStr[0], out outDouble))
-                                                    {
-                                                        DeleteAnError(i + 1);
-                                                        ThrowAnError("GC0011", $"参数 2: 无法从文本转换为整数", "对话", i + 1);
-                                                    }
-                                                    else
-                                                    {
-                                                        DeleteAnError(i + 1);
-                                                        ThrowAnError("GC0011", $"参数 2: 无法从小数转换为整数", "对话", i + 1);
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                    else
-                                    {
-                                        DeleteAnError(i + 1);
-                                    }
-                                }
-                                
-                            }
-                            else
-                            {
-                                DeleteAnError(i + 1);
-                                if (imageNames.IndexOf(codes[0].TrimStart('%')) == -1) //找不到图片资源时
-                                {
-                                    if (soundNames.IndexOf(codes[0].TrimStart('%')) != -1) //找到音频资源时
-                                    {
-                                        DeleteAnError((uint)i + 1, gc0003Lines);
-                                        ThrowAnError("GC0006", "音频类型不能应用于图片处", "对话", i + 1);
-                                        gc0006Lines.Add((uint)i + 1);
-                                    }
-                                    else
-                                    {
-                                        DeleteAnError((uint)i + 1, gc0003Lines);
-                                        ThrowAnError("GC0003", $"资源中未包含\"{codes[0].TrimStart('%')}\"的定义", "对话", i + 1);
-                                        gc0003Lines.Add((uint)i + 1);
-                                    }
-                                }
+                                DeleteAnError((uint)i + 1, gc0006Lines);
                             }
                         }
                     }
-                    else //行为空时
+
+                    if (richTextBox1.Text.EndsWith("\n\n"))
                     {
-                        if (gc0003Lines.IndexOf((uint)i + 1) != -1) //已报错时
-                        {
-                            DeleteAnError((uint)i + 1, gc0003Lines);
-                        }
-                        if (gc0004Lines.IndexOf((uint)i + 1) != -1) //已报错时
-                        {
-                            DeleteAnError((uint)i + 1, gc0004Lines);
-                        }
-                        if (gc0006Lines.IndexOf((uint)i + 1) != -1) //已报错时
-                        {
-                            DeleteAnError((uint)i + 1, gc0006Lines);
-                        }
+                        DeleteAnError(richTextBox1.Text.Split('\n').Length + 1);
+                        DeleteAnError(richTextBox1.Text.Split('\n').Length - 1);
+                        ThrowAnError("GC0007", "代码结尾最多有一个空行", "对话", richTextBox1.Text.Split('\n').Length);
+                    }
+                    else
+                    {
+                        DeleteAnError(richTextBox1.Text.Split('\n').Length + 1);
                     }
                 }
 
-                if (richTextBox1.Text.EndsWith("\n\n"))
+                if (!isFirstPicAdded)
                 {
-                    DeleteAnError(richTextBox1.Text.Split('\n').Length + 1);
-                    DeleteAnError(richTextBox1.Text.Split('\n').Length - 1);
-                    ThrowAnError("GC0007", "代码结尾最多有一个空行", "对话", richTextBox1.Text.Split('\n').Length);
+                    if (!isRES001Throwed)
+                    {
+                        ThrowAnError("RES001", "必须添加起始背景图", "资源", 0);
+                        isRES001Throwed = true;
+                    }
                 }
                 else
                 {
-                    DeleteAnError(richTextBox1.Text.Split('\n').Length + 1);
+                    DeleteAnError(0);
+                    isRES001Throwed = false;
                 }
-            }
 
-            if (!isFirstPicAdded)
-            {
-                if (!isRES001Throwed) {
-                    ThrowAnError("RES001", "必须添加起始背景图", "资源", 0);
-                    isRES001Throwed = true;
-                }
-            }
-            else
-            {
-                DeleteAnError(0);
-                isRES001Throwed = false;
-            }
-
-            if (startpageCheckBox1.Checked && string.IsNullOrEmpty(startpageTextbox1.Text))
-            {
-                if (!isSP0001Throwed)
+                if (startpageCheckBox1.Checked && string.IsNullOrEmpty(startpageTextbox1.Text))
                 {
-                    ThrowAnError("SP0001", "必须输入图片路径", "开始界面", -1);
-                    isSP0001Throwed = true;
+                    if (!isSP0001Throwed)
+                    {
+                        ThrowAnError("SP0001", "必须输入图片路径", "开始界面", -1);
+                        isSP0001Throwed = true;
+                    }
+                }
+                else
+                {
+                    if (isSP0001Throwed)
+                    {
+                        DeleteAnError(-1);
+                        isSP0001Throwed = false;
+                    }
+                }
+                if (startpageCheckBox4.Checked && string.IsNullOrEmpty(startpageTextbox2.Text))
+                {
+                    if (!isSP0002Throwed)
+                    {
+                        ThrowAnError("SP0002", "必须输入图片路径", "开始界面", -2);
+                        isSP0002Throwed = true;
+                    }
+                }
+                else
+                {
+                    if (isSP0002Throwed)
+                    {
+                        DeleteAnError(-2);
+                        isSP0002Throwed = false;
+                    }
+                }
+                if (startpageCheckBox5.Checked && string.IsNullOrEmpty(startpageTextbox3.Text))
+                {
+                    if (!isSP0003Throwed)
+                    {
+                        ThrowAnError("SP0003", "必须输入图片路径", "开始界面", -3);
+                        isSP0003Throwed = true;
+                    }
+                }
+                else
+                {
+                    if (isSP0003Throwed)
+                    {
+                        DeleteAnError(-3);
+                        isSP0003Throwed = false;
+                    }
                 }
             }
-            else
+            catch (Exception ex)
             {
-                if (isSP0001Throwed)
-                {
-                    DeleteAnError(-1);
-                    isSP0001Throwed = false;
-                }
-            }
-            if (startpageCheckBox4.Checked && string.IsNullOrEmpty(startpageTextbox2.Text))
-            {
-                if (!isSP0002Throwed)
-                {
-                    ThrowAnError("SP0002", "必须输入图片路径", "开始界面", -2);
-                    isSP0002Throwed = true;
-                }
-            }
-            else
-            {
-                if (isSP0002Throwed)
-                {
-                    DeleteAnError(-2);
-                    isSP0002Throwed = false;
-                }
-            }
-            if (startpageCheckBox5.Checked && string.IsNullOrEmpty(startpageTextbox3.Text))
-            {
-                if (!isSP0003Throwed)
-                {
-                    ThrowAnError("SP0003", "必须输入图片路径", "开始界面", -3);
-                    isSP0003Throwed = true;
-                }
-            }
-            else
-            {
-                if (isSP0003Throwed)
-                {
-                    DeleteAnError(-3);
-                    isSP0003Throwed = false;
-                }
+                SaveFiles();
+                string exStr = ex.ToString().Replace("\n", "{LF}").Replace("\r", "{CR}").Replace("/", "{Slash}").Replace("\\", "{Backslash}").Replace("%", "{Percent}").Replace("?", "{Question}").Replace("&", "{And}").Replace("$", "{Dollar}").Replace("@", "{At}").Replace("#", "{Hash}");
+                BugReporter reporter = new BugReporter("CheckCodes", exStr);
+                reporter.ShowDialog();
             }
         }
 
@@ -1113,135 +1173,127 @@ namespace GalGM
         
         private bool Build(bool isHotReload = false)
         {
-            SaveFiles();
-
-            DateTime beforeDt = DateTime.Now;
-            if (!isHotReload)
+            try
             {
-                //tabControl2.SelectedIndex = 1;
-                comboBox1.SelectedIndex = 0;
-                buildPrint("%Clear%");
-                buildPrint("已启动构建...");
-            }
+                SaveFiles();
 
-            if (errorItems.Count <= 0)
-            {
-                string projectName = INIHelper.Read("Base", "name", "ProjectName", nowPath);
-                string outputPath = workSpace + $"bin\\{exeConfig}\\";
+                DateTime beforeDt = DateTime.Now;
                 if (!isHotReload)
                 {
-                    buildPrint($"1>------ 已启动构建: 项目: {projectName}, 配置: {exeConfig} ------");
-                    ExtractFile($"GalGM.OutputDatas.base.exe", outputPath + $"{projectName}.exe");
-                    ExtractFile($"GalGM.OutputDatas.base.exe.config", outputPath + $"{projectName}.exe.config");
-                    ExtractFile($"GalGM.OutputDatas.Microsoft.DirectX.DirectSound.dll", outputPath + "Microsoft.DirectX.DirectSound.dll");
-                    ExtractFile($"GalGM.OutputDatas.Microsoft.DirectX.dll", outputPath + "Microsoft.DirectX.dll");
-                    ExtractFile($"GalGM.OutputDatas.SevenZipSharp.dll", outputPath + "SevenZipSharp.dll");
-                    Directory.CreateDirectory(outputPath + "7z");
-                    ExtractFile($"GalGM.OutputDatas.7z.dll", outputPath + "7z\\7z.dll");
-                    if (!Directory.Exists(outputPath + "data"))
-                    {
-                        Directory.CreateDirectory(outputPath + "data");
-                    }
+                    //tabControl2.SelectedIndex = 1;
+                    comboBox1.SelectedIndex = 0;
+                    buildPrint("%Clear%");
+                    buildPrint("已启动构建...");
                 }
-                if (richTextBox1.Text[richTextBox1.Text.Length - 1] != '\n')
+
+                if (errorItems.Count <= 0)
                 {
-                    richTextBox1.Text += "\n";
-                }
-                string[] oneCharacterDialogs = richTextBox1.Text.Split('#'); //将代码按人物名分，数组的每一项第一行为人物名，其他为对话内容
-                int lastIndex = 0;
-                string characternameCache = "";
-                string dialogCache = "";
-                string voiceStatCache = "";
-                string voicePathCache = "";
-                for (int i = 0; i < oneCharacterDialogs.Length; i++)
-                {
-                    string[] characternameAndDialogs = oneCharacterDialogs[i].Split('\n'); //数组首项为人物名，其他为对话内容
-                    lastIndex += characternameAndDialogs.Length - 1; //每次加上数组长度减去第一个人物名
-                    for (int i2 = 0; i2 < characternameAndDialogs.Length - 1; i2++)
+                    string projectName = INIHelper.Read("Base", "name", "ProjectName", nowPath);
+                    string outputPath = workSpace + $"bin\\{exeConfig}\\";
+                    if (!isHotReload)
                     {
-                        if (i2 != 0)
+                        buildPrint($"1>------ 已启动构建: 项目: {projectName}, 配置: {exeConfig} ------");
+                        ExtractFile($"GalGM.OutputDatas.base.exe", outputPath + $"{projectName}.exe");
+                        ExtractFile($"GalGM.OutputDatas.base.exe.config", outputPath + $"{projectName}.exe.config");
+                        ExtractFile($"GalGM.OutputDatas.Microsoft.DirectX.DirectSound.dll", outputPath + "Microsoft.DirectX.DirectSound.dll");
+                        ExtractFile($"GalGM.OutputDatas.Microsoft.DirectX.dll", outputPath + "Microsoft.DirectX.dll");
+                        ExtractFile($"GalGM.OutputDatas.SevenZipSharp.dll", outputPath + "SevenZipSharp.dll");
+                        Directory.CreateDirectory(outputPath + "7z");
+                        ExtractFile($"GalGM.OutputDatas.7z.dll", outputPath + "7z\\7z.dll");
+                        if (!Directory.Exists(outputPath + "data"))
                         {
-                            characternameCache += Base64Convert(characternameAndDialogs[0], true) + "|"; //重复写入人物名
-                            if (characternameAndDialogs[i2][0] != '&' && characternameAndDialogs[i2][0] != '^' && characternameAndDialogs[i2][0] != '~' && characternameAndDialogs[i2][0] != '%')
-                            {
-                                string[] vo = characternameAndDialogs[i2].Split('|');
-                                if (vo.Length == 2)
-                                {
-                                    dialogCache += Base64Convert(vo[0], true) + "|"; //重复写入对话内容
-                                    voicePathCache += $"./assets/{vo[1]}.wav|"; //重复写入音频路径
-                                    voiceStatCache += "true|"; //重复将本次音频状态设为true
-                                }
-                                else
-                                {
-                                    dialogCache += Base64Convert(characternameAndDialogs[i2], true) + "|"; //重复写入对话内容
-                                    voicePathCache += "nil|"; //音频路径添加nil标记
-                                    voiceStatCache += "false|"; //重复将本次音频状态设为false
-                                }
-                            }
+                            Directory.CreateDirectory(outputPath + "data");
                         }
                     }
-                }
-                string[] lineText = richTextBox1.Text.Split('\n'); //每行的内容
-                string bgMusicPartCache = "";
-                string bgMusicPartPathCache = "";
-                string bgPicPartCache = "";
-                string bgPicPartPathCache = "";
-                bool isUsingBGM = false;
-                int m = 0;
-                string showMorePicIndexCache = "";
-                string showMorePicPathCache = "";
-                string showMorePicLoactionCache = "default|";
-                string showMorePicSizeCache = "default|";
-                for (int i = 0; i < lineText.Length; i++)
-                {
-                    if (!string.IsNullOrEmpty(lineText[i]))
+                    if (richTextBox1.Text[richTextBox1.Text.Length - 1] != '\n')
                     {
-                        if (lineText[i][0] == '#' || lineText[i][0] == '&' || lineText[i][0] == '^' || lineText[i][0] == '~' || lineText[i][0] == '%')
+                        richTextBox1.Text += "\n";
+                    }
+                    string[] oneCharacterDialogs = richTextBox1.Text.Split('#'); //将代码按人物名分，数组的每一项第一行为人物名，其他为对话内容
+                    int lastIndex = 0;
+                    string characternameCache = "";
+                    string dialogCache = "";
+                    string voiceStatCache = "";
+                    string voicePathCache = "";
+                    for (int i = 0; i < oneCharacterDialogs.Length; i++)
+                    {
+                        string[] characternameAndDialogs = oneCharacterDialogs[i].Split('\n'); //数组首项为人物名，其他为对话内容
+                        lastIndex += characternameAndDialogs.Length - 1; //每次加上数组长度减去第一个人物名
+                        for (int i2 = 0; i2 < characternameAndDialogs.Length - 1; i2++)
                         {
-                            m++;
-                        }
-                        if (lineText[i][0] == '&') //首字符为&时
-                        {
-                            bgMusicPartCache += (i + 1 - m).ToString() + "|";
-                            string mName = lineText[i].TrimStart('&'); //资源名
-                            int index = soundNames.IndexOf(mName);
-                            if (index != -1)
+                            if (i2 != 0)
                             {
-                                bgMusicPartPathCache += $"./assets/{@soundNames[index]}.wav|";
-                                isUsingBGM = true;
+                                characternameCache += Base64Convert(characternameAndDialogs[0], true) + "|"; //重复写入人物名
+                                if (characternameAndDialogs[i2][0] != '&' && characternameAndDialogs[i2][0] != '^' && characternameAndDialogs[i2][0] != '~' && characternameAndDialogs[i2][0] != '%')
+                                {
+                                    string[] vo = characternameAndDialogs[i2].Split('|');
+                                    if (vo.Length == 2)
+                                    {
+                                        dialogCache += Base64Convert(vo[0], true) + "|"; //重复写入对话内容
+                                        voicePathCache += $"./assets/{vo[1]}.wav|"; //重复写入音频路径
+                                        voiceStatCache += "true|"; //重复将本次音频状态设为true
+                                    }
+                                    else
+                                    {
+                                        dialogCache += Base64Convert(characternameAndDialogs[i2], true) + "|"; //重复写入对话内容
+                                        voicePathCache += "nil|"; //音频路径添加nil标记
+                                        voiceStatCache += "false|"; //重复将本次音频状态设为false
+                                    }
+                                }
                             }
                         }
-
-                        if (lineText[i][0] == '~') //首字符为~时
+                    }
+                    string[] lineText = richTextBox1.Text.Split('\n'); //每行的内容
+                    string bgMusicPartCache = "";
+                    string bgMusicPartPathCache = "";
+                    string bgPicPartCache = "";
+                    string bgPicPartPathCache = "";
+                    bool isUsingBGM = false;
+                    int m = 0;
+                    string showMorePicIndexCache = "";
+                    string showMorePicPathCache = "";
+                    string showMorePicLoactionCache = "";
+                    string showMorePicSizeCache = "";
+                    string showMorePicDisCache = "";
+                    string showMorePicIdCache = "";
+                    for (int i = 0; i < lineText.Length; i++)
+                    {
+                        if (!string.IsNullOrEmpty(lineText[i]))
                         {
-                            bgPicPartCache += (i + 1 - m).ToString() + "|";
-                            string mName = lineText[i].TrimStart('~'); //资源名
-                            int index = imageNames.IndexOf(mName);
-                            if (index != -1)
+                            if (lineText[i][0] == '#' || lineText[i][0] == '&' || lineText[i][0] == '^' || lineText[i][0] == '~' || lineText[i][0] == '%')
                             {
-                                Directory.CreateDirectory($"{workSpace}bin\\{exeConfig}\\assets");
-                                File.Copy(imagePaths[index], $"{workSpace}bin\\{exeConfig}\\assets\\{imageNames[index]}.png", true);
-                                bgPicPartPathCache += $"./assets/{imageNames[index]}.png|";
+                                m++;
                             }
-                        }
-
-                        if (lineText[i][0] == '%') //首字母为%时
-                        {
-                            string[] codes = lineText[i].Split('|');
-                            if (codes.Length == 1)
+                            if (lineText[i][0] == '&') //首字符为&时
                             {
-                                showMorePicIndexCache += (i - m + 1).ToString() + "|";
-                                int index = imageNames.IndexOf(codes[0].TrimStart('%'));
+                                bgMusicPartCache += (i + 1 - m).ToString() + "|";
+                                string mName = lineText[i].TrimStart('&'); //资源名
+                                int index = soundNames.IndexOf(mName);
                                 if (index != -1)
                                 {
-                                    File.Copy(imagePaths[index], $"{workSpace}bin\\{exeConfig}\\assets\\{imageNames[index]}.png", true);
-                                    showMorePicPathCache += $"./assets/{imageNames[index]}.png|";
+                                    bgMusicPartPathCache += $"./assets/{@soundNames[index]}.wav|";
+                                    isUsingBGM = true;
                                 }
                             }
-                            else
+
+                            if (lineText[i][0] == '~') //首字符为~时
                             {
-                                if (codes.Length == 3)
+                                bgPicPartCache += (i + 1 - m).ToString() + "|";
+                                string mName = lineText[i].TrimStart('~'); //资源名
+                                int index = imageNames.IndexOf(mName);
+                                if (index != -1)
                                 {
+                                    Directory.CreateDirectory($"{workSpace}bin\\{exeConfig}\\assets");
+                                    File.Copy(imagePaths[index], $"{workSpace}bin\\{exeConfig}\\assets\\{imageNames[index]}.png", true);
+                                    bgPicPartPathCache += $"./assets/{imageNames[index]}.png|";
+                                }
+                            }
+
+                            if (lineText[i][0] == '%') //首字母为%时
+                            {
+                                if (lineText[i][1] != '%')
+                                {
+                                    string[] codes = lineText[i].Split('|');
                                     showMorePicIndexCache += (i - m + 1).ToString() + "|";
                                     int index = imageNames.IndexOf(codes[0].TrimStart('%'));
                                     if (index != -1)
@@ -1251,180 +1303,199 @@ namespace GalGM
                                     }
                                     showMorePicLoactionCache += $"{codes[1]}|";
                                     showMorePicSizeCache += $"{codes[2]}|";
+                                    showMorePicIdCache += $"{codes[3]}|";
+                                }
+                                else
+                                {
+                                    int id = int.Parse(lineText[i].TrimStart('%').TrimStart('%'));
+                                    showMorePicDisCache += $"{id}|";
                                 }
                             }
                         }
                     }
-                }
-                bool isShowMainPic = startpageCheckBox1.Checked;
-                string mainPicPath = "nil";
-                bool isModifyMainButton = startpageCheckBox2.Checked;
-                bool isModifyButtonBgPic = startpageCheckBox4.Checked;
-                string mainButtonBgPicPath = "nil";
-                bool isReversalMainButtonTextColor = startpageCheckBox3.Checked;
-                bool isUsingMainBGM = startpageCheckBox5.Checked;
-                string mainBGMPath = "nil";
-                if (isShowMainPic)
-                {
-                    File.Copy(startpageTextbox1.Text, $"{outputPath}assets\\{startpageTextbox1.Text.Split('\\')[startpageTextbox1.Text.Split('\\').Length - 1]}");
-                    mainPicPath = $"./assets/{startpageTextbox1.Text.Split('\\')[startpageTextbox1.Text.Split('\\').Length - 1]}";
-                }
-                if (isModifyMainButton)
-                {
-                    if (isModifyButtonBgPic)
+                    bool isShowMainPic = startpageCheckBox1.Checked;
+                    string mainPicPath = "nil";
+                    bool isModifyMainButton = startpageCheckBox2.Checked;
+                    bool isModifyButtonBgPic = startpageCheckBox4.Checked;
+                    string mainButtonBgPicPath = "nil";
+                    bool isReversalMainButtonTextColor = startpageCheckBox3.Checked;
+                    bool isUsingMainBGM = startpageCheckBox5.Checked;
+                    string mainBGMPath = "nil";
+                    if (isShowMainPic)
                     {
-                        File.Copy(startpageTextbox2.Text, $"{outputPath}assets\\{startpageTextbox2.Text.Split('\\')[startpageTextbox2.Text.Split('\\').Length - 1]}");
-                        mainButtonBgPicPath = $"./assets/{startpageTextbox2.Text.Split('\\')[startpageTextbox2.Text.Split('\\').Length - 1]}";
+                        File.Copy(startpageTextbox1.Text, $"{outputPath}assets\\{startpageTextbox1.Text.Split('\\')[startpageTextbox1.Text.Split('\\').Length - 1]}");
+                        mainPicPath = $"./assets/{startpageTextbox1.Text.Split('\\')[startpageTextbox1.Text.Split('\\').Length - 1]}";
                     }
-                }
-                if (isUsingMainBGM)
-                {
-                    File.Copy(startpageTextbox3.Text, $"{outputPath}assets\\{startpageTextbox3.Text.Split('\\')[startpageTextbox3.Text.Split('\\').Length - 1]}");
-                    mainBGMPath = $"./assets/{startpageTextbox3.Text.Split('\\')[startpageTextbox3.Text.Split('\\').Length - 1]}";
-                }
-                //修正
-                for (int i = 0; i < richTextBox1.Text.Length; i++)
-                {
-                    if (richTextBox1.Text[i] == '#')
+                    if (isModifyMainButton)
                     {
-                        lastIndex--;
-                    }
-                }
-                for (int i = 0; i < m; i++)
-                {
-                    voicePathCache += "nil|";
-                    voiceStatCache += "false|";
-                }
-                int lT = 0;
-                for (int i = 0; i < bgMusicPartCache.Length; i++)
-                {
-                    if (bgMusicPartCache[i] == '|')
-                    {
-                        lT++;
-                    }
-                }
-                if (lT == 1)
-                {
-                    bgMusicPartCache += $"{lastIndex}|";
-                }
-                int lP = 0;
-                for (int i = 0; i < bgPicPartCache.Length; i++)
-                {
-                    if (bgPicPartCache[i] == '|')
-                    {
-                        lP++;
-                    }
-                }
-                if (lP == 1)
-                {
-                    bgPicPartCache += $"{lastIndex}|";
-                }
-                if (string.IsNullOrEmpty(bgMusicPartCache))
-                {
-                    bgMusicPartCache = "0|1|";
-                }
-                if (string.IsNullOrEmpty(bgPicPartCache))
-                {
-                    bgPicPartCache = "0|1|";
-                }
-                lastIndex = dialogCache.Split('|').Length;
-                voiceStatCache = voiceStatCache.Remove(voiceStatCache.Length - m * 6, m * 6);
-                voicePathCache = voicePathCache.Remove(voicePathCache.Length - m * 4, m * 4);
-                //删除最后一个多余的“|”
-                characternameCache = characternameCache.TrimEnd('|');
-                dialogCache = dialogCache.TrimEnd('|');
-                voiceStatCache = voiceStatCache.TrimEnd('|');
-                voicePathCache = voicePathCache.TrimEnd('|');
-                bgMusicPartCache = bgMusicPartCache.TrimEnd('|');
-                bgMusicPartPathCache = bgMusicPartPathCache.TrimEnd('|');
-                bgPicPartCache = bgPicPartCache.TrimEnd('|');
-                bgPicPartPathCache = bgPicPartPathCache.TrimEnd('|');
-                showMorePicIndexCache = showMorePicIndexCache.TrimEnd('|');
-                showMorePicPathCache = showMorePicPathCache.TrimEnd('|');
-                showMorePicLoactionCache = showMorePicLoactionCache.TrimEnd('|');
-                showMorePicSizeCache = showMorePicSizeCache.TrimEnd('|');
-                //写入文件
-                //游戏
-                INIHelper.Write("Base", "lastIndex", lastIndex.ToString(), outputPath + "data\\gConfig.wggproj");
-                INIHelper.Write("Character", "names", characternameCache, outputPath + "data\\gConfig.wggproj");
-                INIHelper.Write("Dialog", "texts", dialogCache, outputPath + "data\\gConfig.wggproj");
-                INIHelper.Write("Voice", "status", voiceStatCache, outputPath + "data\\gConfig.wggproj");
-                INIHelper.Write("Voice", "paths", voicePathCache, outputPath + "data\\gConfig.wggproj");
-                INIHelper.Write("Base", "isUsingBGM", isUsingBGM.ToString().ToLower(), outputPath + "data\\gConfig.wggproj");
-                INIHelper.Write("Base", "bgMusicPart", bgMusicPartCache, outputPath + "data\\gConfig.wggproj");
-                INIHelper.Write("Base", "bgMusicPartPath", bgMusicPartPathCache, outputPath + "data\\gConfig.wggproj");
-                INIHelper.Write("Base", "bgPicPart", bgPicPartCache, outputPath + "data\\gConfig.wggproj");
-                INIHelper.Write("Base", "bgPicPartPath", bgPicPartPathCache, outputPath + "data\\gConfig.wggproj");
-                INIHelper.Write("Base", "firstBgPicPath", INIHelper.Read("Image", "firstPic", "nil", $"{workSpace}Resources.resg"), outputPath + "data\\gConfig.wggproj");
-                INIHelper.Write("Base", "isEnc", "false", outputPath + "data\\gConfig.wggproj");
-                INIHelper.Write("MorePic", "index", showMorePicIndexCache, outputPath + "data\\gConfig.wggproj");
-                INIHelper.Write("MorePic", "path", showMorePicPathCache, outputPath + "data\\gConfig.wggproj");
-                INIHelper.Write("MorePic", "location", showMorePicLoactionCache, outputPath + "data\\gConfig.wggproj");
-                INIHelper.Write("MorePic", "size", showMorePicSizeCache, outputPath + "data\\gConfig.wggproj");
-                //主菜单
-                INIHelper.Write("Base", "isShowMainPic", isShowMainPic.ToString(), outputPath + "data\\mConfig.wggproj");
-                INIHelper.Write("Base", "mainPicPath", mainPicPath, outputPath + "data\\mConfig.wggproj");
-                INIHelper.Write("Base", "isPlayMainBGM", isUsingMainBGM.ToString(), outputPath + "data\\mConfig.wggproj");
-                INIHelper.Write("Base", "mainSoundPath", mainBGMPath, outputPath + "data\\mConfig.wggproj");
-                INIHelper.Write("Button", "isModifyBgPic", isModifyButtonBgPic.ToString(), outputPath + "data\\mConfig.wggproj");
-                INIHelper.Write("Button", "bgPicPath", mainButtonBgPicPath, outputPath + "data\\mConfig.wggproj");
-                INIHelper.Write("Button", "isReversalTextColor", isReversalMainButtonTextColor.ToString(), outputPath + "data\\mConfig.wggproj");
-                //拷贝文件
-                for (int i = 0; i < soundPaths.Count; i++)
-                {
-                    File.Copy(soundPaths[i], $"{workSpace}bin\\{exeConfig}\\assets\\{@soundNames[i]}.wav", true);
-                }
-                //加密文件
-                if (isEncryption)
-                {
-                    List<string> encFiles = new List<string>();
-                    DirectoryInfo di = new DirectoryInfo($"{outputPath}assets");
-                    FileSystemInfo[] fsInfos = di.GetFileSystemInfos();
-                    foreach (FileSystemInfo fsInfo in fsInfos)
-                    {
-                        if (fsInfo is DirectoryInfo)
-                        { //是文件夹时
-
-                        }
-                        else
+                        if (isModifyButtonBgPic)
                         {
-                            encFiles.Add(fsInfo.FullName);
+                            File.Copy(startpageTextbox2.Text, $"{outputPath}assets\\{startpageTextbox2.Text.Split('\\')[startpageTextbox2.Text.Split('\\').Length - 1]}");
+                            mainButtonBgPicPath = $"./assets/{startpageTextbox2.Text.Split('\\')[startpageTextbox2.Text.Split('\\').Length - 1]}";
                         }
                     }
-                    R7z archiver = new R7z();
-                    archiver.CompressFilesEncrypted("assets.gef", "GalgameFromGalGM1145141919810%", encFiles.ToArray());
-                    if (File.Exists("./assets.gef")) {
-                        File.Copy("./assets.gef", $"{outputPath}assets.gef", true);
-                        File.Delete("./assets.gef");
-                        Directory.Delete($"{outputPath}assets", true);
-                        INIHelper.Write("Base", "isEnc", "true", outputPath + "data\\gConfig.wggproj");
+                    if (isUsingMainBGM)
+                    {
+                        File.Copy(startpageTextbox3.Text, $"{outputPath}assets\\{startpageTextbox3.Text.Split('\\')[startpageTextbox3.Text.Split('\\').Length - 1]}");
+                        mainBGMPath = $"./assets/{startpageTextbox3.Text.Split('\\')[startpageTextbox3.Text.Split('\\').Length - 1]}";
                     }
-                }
-                if (!isHotReload)
-                {
-                    buildPrint($"1>  {projectName} -> {outputPath}{projectName}.exe");
-                    buildPrint("========== 构建成功 ==========");
+                    //修正
+                    for (int i = 0; i < richTextBox1.Text.Length; i++)
+                    {
+                        if (richTextBox1.Text[i] == '#')
+                        {
+                            lastIndex--;
+                        }
+                    }
+                    for (int i = 0; i < m; i++)
+                    {
+                        voicePathCache += "nil|";
+                        voiceStatCache += "false|";
+                    }
+                    int lT = 0;
+                    for (int i = 0; i < bgMusicPartCache.Length; i++)
+                    {
+                        if (bgMusicPartCache[i] == '|')
+                        {
+                            lT++;
+                        }
+                    }
+                    if (lT == 1)
+                    {
+                        bgMusicPartCache += $"{lastIndex}|";
+                    }
+                    int lP = 0;
+                    for (int i = 0; i < bgPicPartCache.Length; i++)
+                    {
+                        if (bgPicPartCache[i] == '|')
+                        {
+                            lP++;
+                        }
+                    }
+                    if (lP == 1)
+                    {
+                        bgPicPartCache += $"{lastIndex}|";
+                    }
+                    if (string.IsNullOrEmpty(bgMusicPartCache))
+                    {
+                        bgMusicPartCache = "0|1|";
+                    }
+                    if (string.IsNullOrEmpty(bgPicPartCache))
+                    {
+                        bgPicPartCache = "0|1|";
+                    }
+                    lastIndex = dialogCache.Split('|').Length;
+                    voiceStatCache = voiceStatCache.Remove(voiceStatCache.Length - m * 6, m * 6);
+                    voicePathCache = voicePathCache.Remove(voicePathCache.Length - m * 4, m * 4);
+                    //删除最后一个多余的“|”
+                    characternameCache = characternameCache.TrimEnd('|');
+                    dialogCache = dialogCache.TrimEnd('|');
+                    voiceStatCache = voiceStatCache.TrimEnd('|');
+                    voicePathCache = voicePathCache.TrimEnd('|');
+                    bgMusicPartCache = bgMusicPartCache.TrimEnd('|');
+                    bgMusicPartPathCache = bgMusicPartPathCache.TrimEnd('|');
+                    bgPicPartCache = bgPicPartCache.TrimEnd('|');
+                    bgPicPartPathCache = bgPicPartPathCache.TrimEnd('|');
+                    showMorePicIndexCache = showMorePicIndexCache.TrimEnd('|');
+                    showMorePicPathCache = showMorePicPathCache.TrimEnd('|');
+                    showMorePicLoactionCache = showMorePicLoactionCache.TrimEnd('|');
+                    showMorePicSizeCache = showMorePicSizeCache.TrimEnd('|');
+                    showMorePicDisCache = showMorePicDisCache.TrimEnd('|');
+                    showMorePicIdCache = showMorePicIdCache.TrimEnd('|');
+                    //写入文件
+                    //游戏
+                    INIHelper.Write("Base", "lastIndex", lastIndex.ToString(), outputPath + "data\\gConfig.wggproj");
+                    INIHelper.Write("Character", "names", characternameCache, outputPath + "data\\gConfig.wggproj");
+                    INIHelper.Write("Dialog", "texts", dialogCache, outputPath + "data\\gConfig.wggproj");
+                    INIHelper.Write("Voice", "status", voiceStatCache, outputPath + "data\\gConfig.wggproj");
+                    INIHelper.Write("Voice", "paths", voicePathCache, outputPath + "data\\gConfig.wggproj");
+                    INIHelper.Write("Base", "isUsingBGM", isUsingBGM.ToString().ToLower(), outputPath + "data\\gConfig.wggproj");
+                    INIHelper.Write("Base", "bgMusicPart", bgMusicPartCache, outputPath + "data\\gConfig.wggproj");
+                    INIHelper.Write("Base", "bgMusicPartPath", bgMusicPartPathCache, outputPath + "data\\gConfig.wggproj");
+                    INIHelper.Write("Base", "bgPicPart", bgPicPartCache, outputPath + "data\\gConfig.wggproj");
+                    INIHelper.Write("Base", "bgPicPartPath", bgPicPartPathCache, outputPath + "data\\gConfig.wggproj");
+                    INIHelper.Write("Base", "firstBgPicPath", INIHelper.Read("Image", "firstPic", "nil", $"{workSpace}Resources.resg"), outputPath + "data\\gConfig.wggproj");
+                    INIHelper.Write("Base", "isEnc", "false", outputPath + "data\\gConfig.wggproj");
+                    INIHelper.Write("MorePic", "index", showMorePicIndexCache, outputPath + "data\\gConfig.wggproj");
+                    INIHelper.Write("MorePic", "path", showMorePicPathCache, outputPath + "data\\gConfig.wggproj");
+                    INIHelper.Write("MorePic", "location", showMorePicLoactionCache, outputPath + "data\\gConfig.wggproj");
+                    INIHelper.Write("MorePic", "size", showMorePicSizeCache, outputPath + "data\\gConfig.wggproj");
+                    INIHelper.Write("MorePic", "disIndex", showMorePicDisCache, outputPath + "data\\gConfig.wggproj");
+                    INIHelper.Write("MorePic", "id", showMorePicIdCache, outputPath + "data\\gConfig.wggproj");
+                    //主菜单
+                    INIHelper.Write("Base", "isShowMainPic", isShowMainPic.ToString(), outputPath + "data\\mConfig.wggproj");
+                    INIHelper.Write("Base", "mainPicPath", mainPicPath, outputPath + "data\\mConfig.wggproj");
+                    INIHelper.Write("Base", "isPlayMainBGM", isUsingMainBGM.ToString(), outputPath + "data\\mConfig.wggproj");
+                    INIHelper.Write("Base", "mainSoundPath", mainBGMPath, outputPath + "data\\mConfig.wggproj");
+                    INIHelper.Write("Button", "isModifyBgPic", isModifyButtonBgPic.ToString(), outputPath + "data\\mConfig.wggproj");
+                    INIHelper.Write("Button", "bgPicPath", mainButtonBgPicPath, outputPath + "data\\mConfig.wggproj");
+                    INIHelper.Write("Button", "isReversalTextColor", isReversalMainButtonTextColor.ToString(), outputPath + "data\\mConfig.wggproj");
+                    //拷贝文件
+                    for (int i = 0; i < soundPaths.Count; i++)
+                    {
+                        File.Copy(soundPaths[i], $"{workSpace}bin\\{exeConfig}\\assets\\{@soundNames[i]}.wav", true);
+                    }
+                    //加密文件
+                    if (isEncryption)
+                    {
+                        List<string> encFiles = new List<string>();
+                        DirectoryInfo di = new DirectoryInfo($"{outputPath}assets");
+                        FileSystemInfo[] fsInfos = di.GetFileSystemInfos();
+                        foreach (FileSystemInfo fsInfo in fsInfos)
+                        {
+                            if (fsInfo is DirectoryInfo)
+                            { //是文件夹时
 
+                            }
+                            else
+                            {
+                                encFiles.Add(fsInfo.FullName);
+                            }
+                        }
+                        R7z archiver = new R7z();
+                        archiver.CompressFilesEncrypted("assets.gef", "GalgameFromGalGM1145141919810%", encFiles.ToArray());
+                        if (File.Exists("./assets.gef"))
+                        {
+                            File.Copy("./assets.gef", $"{outputPath}assets.gef", true);
+                            File.Delete("./assets.gef");
+                            Directory.Delete($"{outputPath}assets", true);
+                            INIHelper.Write("Base", "isEnc", "true", outputPath + "data\\gConfig.wggproj");
+                        }
+                    }
+                    if (!isHotReload)
+                    {
+                        buildPrint($"1>  {projectName} -> {outputPath}{projectName}.exe");
+                        buildPrint("========== 构建成功 ==========");
+
+                        DateTime afterDt = DateTime.Now;
+                        TimeSpan ts = afterDt.Subtract(beforeDt);
+                        buildPrint($"========= 构建开始于 {beforeDt}，花费了 {ts} ==========");
+                    }
+                    BuildStatus w = new BuildStatus(true);
+                    w.Show();
+                    return true;
+                }
+                else
+                {
+                    for (int i = 0; i < errorItems.Count; i++)
+                    {
+                        buildPrint($"1>{workSpace}Dialogs.gc({errorItems[i].SubItems[3].Text}): error {errorItems[i].SubItems[0].Text}: {errorItems[i].SubItems[1].Text}");
+                    }
+                    buildPrint("========== 构建失败 ==========");
                     DateTime afterDt = DateTime.Now;
                     TimeSpan ts = afterDt.Subtract(beforeDt);
                     buildPrint($"========= 构建开始于 {beforeDt}，花费了 {ts} ==========");
+                    BuildStatus w = new BuildStatus(false);
+                    w.Show();
+                    return false;
                 }
-                BuildStatus w = new BuildStatus(true);
-                w.Show();
-                return true;
             }
-            else
+            catch (Exception ex)
             {
-                for (int i = 0; i < errorItems.Count; i++)
-                {
-                    buildPrint($"1>{workSpace}Dialogs.gc({errorItems[i].SubItems[3].Text}): error {errorItems[i].SubItems[0].Text}: {errorItems[i].SubItems[1].Text}");
-                }
-                buildPrint("========== 构建失败 ==========");
-                DateTime afterDt = DateTime.Now;
-                TimeSpan ts = afterDt.Subtract(beforeDt);
-                buildPrint($"========= 构建开始于 {beforeDt}，花费了 {ts} ==========");
-                BuildStatus w = new BuildStatus(false);
-                w.Show();
+                SaveFiles();
+                string exStr = ex.ToString().Replace("\n", "{LF}").Replace("\r", "{CR}").Replace("/", "{Slash}").Replace("\\", "{Backslash}").Replace("%", "{Percent}").Replace("?", "{Question}").Replace("&", "{And}").Replace("$", "{Dollar}").Replace("@", "{At}").Replace("#", "{Hash}");
+                BugReporter reporter = new BugReporter("Build", exStr);
+                reporter.ShowDialog();
                 return false;
             }
         }
@@ -1483,63 +1554,73 @@ namespace GalGM
 
         private void toolStripButton3_Click(object sender, EventArgs e)
         {
-            isCloseDebugging = false;
-
-            INIHelper.Write("Base", "status", "true", $"{workSpace}bin\\{exeConfig}\\GalGR.gds");
-
-            string projectName = INIHelper.Read("Base", "name", "ProjectName", nowPath);
-            string exePath = workSpace + $"bin\\{exeConfig}\\";
-            if (Build())
+            try
             {
-                Process pc = new Process();
-                pc.StartInfo.FileName = "cmd.exe";
-                pc.StartInfo.CreateNoWindow = true; //隐藏窗口运行
-                pc.StartInfo.RedirectStandardError = true; //重定向错误流
-                pc.StartInfo.RedirectStandardInput = true; //重定向输入流
-                pc.StartInfo.RedirectStandardOutput = true; //重定向输出流
-                pc.StartInfo.UseShellExecute = false;
-                pc.Start();
-                pc.StandardInput.WriteLine($"cd {exePath}");
-                pc.StandardInput.WriteLine($"{projectName}.exe");
-                statusStrip1.BackColor = Color.FromArgb(134, 27, 45);
-                toolStripButton12.Enabled = true;
-                toolStripButton11.Enabled = true;
-                toolStripButton3.Enabled = false;
-                toolStripButton4.Enabled = false;
-                toolStripButton10.Enabled = false;
-                //tabControl2.SelectedIndex = 1;
-                comboBox1.SelectedIndex = 1;
-                Thread.Sleep(200);
-                isRunning = true;
-            }
-            else
-            {
-                if (File.Exists(exePath))
+                isCloseDebugging = false;
+
+                INIHelper.Write("Base", "status", "true", $"{workSpace}bin\\{exeConfig}\\GalGR.gds");
+
+                string projectName = INIHelper.Read("Base", "name", "ProjectName", nowPath);
+                string exePath = workSpace + $"bin\\{exeConfig}\\";
+                if (Build())
                 {
-                    if (MessageBox.Show("发生构建错误。是否继续并运行上次的成功生成?", "GalGM", MessageBoxButtons.YesNo, MessageBoxIcon.Information) == DialogResult.Yes)
+                    Process pc = new Process();
+                    pc.StartInfo.FileName = "cmd.exe";
+                    pc.StartInfo.CreateNoWindow = true; //隐藏窗口运行
+                    pc.StartInfo.RedirectStandardError = true; //重定向错误流
+                    pc.StartInfo.RedirectStandardInput = true; //重定向输入流
+                    pc.StartInfo.RedirectStandardOutput = true; //重定向输出流
+                    pc.StartInfo.UseShellExecute = false;
+                    pc.Start();
+                    pc.StandardInput.WriteLine($"cd {exePath}");
+                    pc.StandardInput.WriteLine($"{projectName}.exe");
+                    statusStrip1.BackColor = Color.FromArgb(134, 27, 45);
+                    toolStripButton12.Enabled = true;
+                    toolStripButton11.Enabled = true;
+                    toolStripButton3.Enabled = false;
+                    toolStripButton4.Enabled = false;
+                    toolStripButton10.Enabled = false;
+                    //tabControl2.SelectedIndex = 1;
+                    comboBox1.SelectedIndex = 1;
+                    Thread.Sleep(200);
+                    isRunning = true;
+                }
+                else
+                {
+                    if (File.Exists(exePath))
                     {
-                        Process pc = new Process();
-                        pc.StartInfo.FileName = "cmd.exe";
-                        pc.StartInfo.CreateNoWindow = true; //隐藏窗口运行
-                        pc.StartInfo.RedirectStandardError = true; //重定向错误流
-                        pc.StartInfo.RedirectStandardInput = true; //重定向输入流
-                        pc.StartInfo.RedirectStandardOutput = true; //重定向输出流
-                        pc.StartInfo.UseShellExecute = false;
-                        pc.Start();
-                        pc.StandardInput.WriteLine($"cd {exePath}");
-                        pc.StandardInput.WriteLine($"{projectName}.exe");
-                        statusStrip1.BackColor = Color.FromArgb(134, 27, 45);
-                        toolStripButton12.Enabled = true;
-                        toolStripButton11.Enabled = true;
-                        toolStripButton3.Enabled = false;
-                        toolStripButton4.Enabled = false;
-                        toolStripButton10.Enabled = false;
-                        //tabControl2.SelectedIndex = 1;
-                        comboBox1.SelectedIndex = 1;
-                        Thread.Sleep(200);
-                        isRunning = true;
+                        if (MessageBox.Show("发生构建错误。是否继续并运行上次的成功生成?", "GalGM", MessageBoxButtons.YesNo, MessageBoxIcon.Information) == DialogResult.Yes)
+                        {
+                            Process pc = new Process();
+                            pc.StartInfo.FileName = "cmd.exe";
+                            pc.StartInfo.CreateNoWindow = true; //隐藏窗口运行
+                            pc.StartInfo.RedirectStandardError = true; //重定向错误流
+                            pc.StartInfo.RedirectStandardInput = true; //重定向输入流
+                            pc.StartInfo.RedirectStandardOutput = true; //重定向输出流
+                            pc.StartInfo.UseShellExecute = false;
+                            pc.Start();
+                            pc.StandardInput.WriteLine($"cd {exePath}");
+                            pc.StandardInput.WriteLine($"{projectName}.exe");
+                            statusStrip1.BackColor = Color.FromArgb(134, 27, 45);
+                            toolStripButton12.Enabled = true;
+                            toolStripButton11.Enabled = true;
+                            toolStripButton3.Enabled = false;
+                            toolStripButton4.Enabled = false;
+                            toolStripButton10.Enabled = false;
+                            //tabControl2.SelectedIndex = 1;
+                            comboBox1.SelectedIndex = 1;
+                            Thread.Sleep(200);
+                            isRunning = true;
+                        }
                     }
                 }
+            }
+            catch (Exception ex)
+            {
+                SaveFiles();
+                string exStr = ex.ToString().Replace("\n", "{LF}").Replace("\r", "{CR}").Replace("/", "{Slash}").Replace("\\", "{Backslash}").Replace("%", "{Percent}").Replace("?", "{Question}").Replace("&", "{And}").Replace("$", "{Dollar}").Replace("@", "{At}").Replace("#", "{Hash}");
+                BugReporter reporter = new BugReporter("StartDebugging", exStr);
+                reporter.ShowDialog();
             }
         }
 
@@ -1991,6 +2072,48 @@ namespace GalGM
                 button2_Click(sender, e);
             }
             Debug.WriteLine(ms);
+        }
+
+        /// <summary>
+        /// 指定Url地址使用Get 方式获取全部字符串
+        /// </summary>
+        /// <param name="url">请求链接地址</param>
+        /// <param name="isFix">是否进行Darock Api修正</param>
+        /// <returns></returns>
+        public static string NetGet(string url, bool isFix = true)
+        {
+            string result = "";
+            HttpWebRequest req = (HttpWebRequest)WebRequest.Create(url);
+            HttpWebResponse resp = (HttpWebResponse)req.GetResponse();
+            Stream stream = resp.GetResponseStream();
+            try
+            {
+                //获取内容
+                using (StreamReader reader = new StreamReader(stream))
+                {
+                    result = reader.ReadToEnd();
+                }
+            }
+            finally
+            {
+                stream.Close();
+            }
+            if (isFix)
+            {
+                result = result.TrimStart('\"').TrimEnd('\"');
+            }
+            return result;
+        }
+
+        private void label2_Click(object sender, EventArgs e)
+        {
+            string newVerLink = NetGet("http://api.darock.top/galgm/latest");
+            Process.Start(newVerLink);
+        }
+
+        private void label3_Click(object sender, EventArgs e)
+        {
+            groupBox1.Visible = false;
         }
     }
 }

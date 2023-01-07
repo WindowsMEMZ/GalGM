@@ -58,7 +58,7 @@
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(286, 20);
             this.label2.TabIndex = 1;
-            this.label2.Text = "GalGM 0.2.0 by WindowsMEMZ - Preview";
+            this.label2.Text = "GalGM 0.3.0 by WindowsMEMZ - Preview";
             // 
             // label3
             // 
@@ -69,7 +69,7 @@
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(150, 20);
             this.label3.TabIndex = 2;
-            this.label3.Text = "版本 0.2.0 Preview 1.0";
+            this.label3.Text = "版本 0.3.0 Preview 1.0";
             // 
             // button1
             // 
