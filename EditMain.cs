@@ -51,6 +51,7 @@ namespace GalGM
         private bool isStopDebug = false;
         private bool isFirstPicAdded = false;
         private bool isEncryption = false;
+        private bool isHaveAppUpdate = false;
 
         //错误行号
         private List<uint> gc0003Lines = new List<uint>();
@@ -71,8 +72,6 @@ namespace GalGM
         private int currentErrorIndex;
         private bool isThrowed = false;
 
-        public static Point wLocation;
-        public static int wWidth;
         public static string debugOutput = "";
 
         //多窗口互通
@@ -259,11 +258,8 @@ namespace GalGM
 
                 isSavedLast = true;
 
-                string latestVer = NetGet("http://api.darock.top/galgm/getnew");
-                if (latestVer != "0.2.0 Preview 1")
-                {
-                    groupBox1.Visible = true;
-                }
+                Thread checkUpdate = new Thread(CheckAppUpdate);
+                checkUpdate.Start();
             }
             catch (Exception ex)
             {
@@ -271,6 +267,15 @@ namespace GalGM
                 string exStr = ex.ToString().Replace("\n", "{LF}").Replace("\r", "{CR}").Replace("/", "{Slash}").Replace("\\", "{Backslash}").Replace("%", "{Percent}").Replace("?", "{Question}").Replace("&", "{And}").Replace("$", "{Dollar}").Replace("@", "{At}").Replace("#", "{Hash}");
                 BugReporter reporter = new BugReporter("EditMainLoading", exStr);
                 reporter.ShowDialog();
+            }
+        }
+
+        private void CheckAppUpdate()
+        {
+            string latestVer = NetGet("http://api.darock.top/galgm/getnew");
+            if (latestVer != "0.3.0 Preview 1")
+            {
+                isHaveAppUpdate = true;
             }
         }
 
@@ -472,13 +477,6 @@ namespace GalGM
                     label9.ForeColor = Color.Red;
                 }
                 //更新窗口位置
-                wLocation = this.Location;
-                wWidth = this.Width;
-                //更新其它窗口组件
-                //Dialogs dialogs = new Dialogs();
-                //richTextBox1.Text = dialogs.GetText;
-                //ErrorList errorList = new ErrorList();
-                //listView1 = errorList.GetListView;
             }
             catch (Exception ex)
             {
@@ -1175,6 +1173,8 @@ namespace GalGM
         {
             try
             {
+                statusStrip1.BackColor = Color.FromArgb(64, 53, 130);
+
                 SaveFiles();
 
                 DateTime beforeDt = DateTime.Now;
@@ -1473,6 +1473,7 @@ namespace GalGM
                     }
                     BuildStatus w = new BuildStatus(true);
                     w.Show();
+                    statusStrip1.BackColor = Color.FromArgb(66, 66, 66);
                     return true;
                 }
                 else
@@ -1487,6 +1488,7 @@ namespace GalGM
                     buildPrint($"========= 构建开始于 {beforeDt}，花费了 {ts} ==========");
                     BuildStatus w = new BuildStatus(false);
                     w.Show();
+                    statusStrip1.BackColor = Color.FromArgb(66, 66, 66);
                     return false;
                 }
             }
@@ -2121,6 +2123,15 @@ namespace GalGM
         private void label3_Click(object sender, EventArgs e)
         {
             groupBox1.Visible = false;
+        }
+
+        private void timer2_Tick(object sender, EventArgs e)
+        {
+            if (isHaveAppUpdate)
+            {
+                groupBox1.Visible = true;
+                timer2.Enabled = false;
+            }
         }
     }
 }

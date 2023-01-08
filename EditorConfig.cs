@@ -25,6 +25,12 @@ namespace GalGM
         private void EditorConfig_Load(object sender, EventArgs e)
         {
             checkBox1.Checked = bool.Parse(INIHelper.Read("Debug", "openDebugTool", "true", "./editor.config"));
+            checkBox2.Checked = bool.Parse(INIHelper.Read("Debug", "showCodeHelp", "true", "./editor.config"));
+        }
+
+        private void checkBox2_CheckedChanged(object sender, EventArgs e)
+        {
+            INIHelper.Write("Debug", "showCodeHelp", checkBox2.Checked.ToString(), "./editor.config");
         }
     }
 }
