@@ -219,12 +219,6 @@
     <Compile Include="StartWindow.Designer.cs">
       <DependentUpon>StartWindow.cs</DependentUpon>
     </Compile>
-    <Compile Include="Tutorial.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="Tutorial.Designer.cs">
-      <DependentUpon>Tutorial.cs</DependentUpon>
-    </Compile>
     <EmbeddedResource Include="About.resx">
       <DependentUpon>About.cs</DependentUpon>
     </EmbeddedResource>
@@ -288,9 +282,6 @@
     </EmbeddedResource>
     <EmbeddedResource Include="StartWindow.resx">
       <DependentUpon>StartWindow.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Tutorial.resx">
-      <DependentUpon>Tutorial.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="OutputDatas\base.exe.config" />
     <None Include="packages.config" />

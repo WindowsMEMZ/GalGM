@@ -277,6 +277,7 @@ namespace GalGM
             {
                 isHaveAppUpdate = true;
             }
+            NetGet("http://api.darock.top/galgm/numadd");
         }
 
         private void button1_Click(object sender, EventArgs e)
@@ -489,8 +490,7 @@ namespace GalGM
 
         private void button5_Click(object sender, EventArgs e)
         {
-            Tutorial w = new Tutorial();
-            w.Show();
+            Process.Start("https://galgmdoc.darock.top");
         }
 
         private void button6_Click(object sender, EventArgs e)
@@ -1919,7 +1919,7 @@ namespace GalGM
 
         private void 查看帮助VToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            Process.Start("https://galgmdoc.darock.top/");
+            Process.Start("https://darock.top/galgm/doc");
         }
 
         private void 关于GalGMAToolStripMenuItem_Click(object sender, EventArgs e)
@@ -2132,6 +2132,11 @@ namespace GalGM
                 groupBox1.Visible = true;
                 timer2.Enabled = false;
             }
+        }
+
+        private void toolStripMenuItem2_Click(object sender, EventArgs e)
+        {
+            Process.Start("https://darock.top/community");
         }
     }
 }
